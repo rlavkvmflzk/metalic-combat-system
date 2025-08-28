@@ -1355,3 +1355,52 @@ Hooks.once('init', () => {
         }
     });
 });
+// =======================================================================
+// ★★★★★ 채팅 카드 상호작용 기능 활성화 (오류 수정 최종 버전) ★★★★★
+// =======================================================================
+
+/**
+ * 채팅 로그에 렌더링된 모든 메시지에 대해 이벤트 리스너를 활성화합니다.
+ * @param {ChatMessage} message - 렌더링된 채팅 메시지 객체
+ * @param {jQuery} html - 메시지의 HTML 요소
+ * @param {object} data - 메시지 데이터
+ */
+const activateChatListeners = (message, html, data) => {
+    // 접기/펴기 기능 (Collapsible)
+    html.find('.mcs-collapsible-header').on('click', event => {
+        event.preventDefault();
+        const header = $(event.currentTarget);
+        const card = header.closest('.mcs-collapsible-card');
+        card.toggleClass('collapsed');
+    });
+
+    // 방어 굴림 버튼 기능
+    html.find('.mcs-defense-button').on('click', async event => {
+        event.preventDefault();
+        const button = $(event.currentTarget);
+        // ★★★★★ 오류 수정 지점 ★★★★★
+        // defense-controls가 아니라 mcs-target-section에서 데이터를 찾아야 합니다.
+        const targetSection = button.closest('.mcs-target-section, .defense-result'); 
+        
+        const defenseType = targetSection.find('.mcs-defense-select').val();
+        const modifier = parseInt(targetSection.find('.mcs-defense-modifier').val()) || 0;
+        
+        // 버튼과 부모 요소들로부터 모든 데이터 속성을 읽어옵니다.
+        const data = { ...button.data(), ...targetSection.data() };
+
+        // ★★★★★ 오류 수정 지점 ★★★★★
+        // DefenseManager를 직접 호출해야 합니다.
+        await DefenseManager.performDefense(
+            data.targetId,
+            data.attackRoll,
+            defenseType,
+            modifier,
+            data.isCritical,
+            data.isFumble,
+            decodeURIComponent(data.combatData)
+        );
+    });
+};
+
+// Foundry VTT의 핵심 Hook: 채팅 메시지가 화면에 그려질 때마다 위의 함수를 실행
+Hooks.on('renderChatMessage', activateChatListeners);

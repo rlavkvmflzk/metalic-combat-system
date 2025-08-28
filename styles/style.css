@@ -1,4 +1,4 @@
-/* --- 원본 기반 SF 테마 수정 (전체 코드, 생략 없음) --- */
+/* --- 원본 기반 SF 테마 수정 (전체 코드, 범위 제한 적용) --- */
 
 /* ★ 새로운 색상 변수 정의 */
 :root {
@@ -15,8 +15,9 @@
     --neutral-grey: #6c757d;
 }
 
+/* --- 시트 내부 스타일 --- */
 /* 시트 기본 스타일 */
-.sheet.custom-system .sheet-container {
+.custom-system .sheet-container {
     font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
     color: var(--text-primary);
     background: var(--main-bg);
@@ -25,7 +26,7 @@
 }
   
 /* 프로필 이미지 */
-.sheet.custom-system .profile-img-container {
+.custom-system .profile-img-container {
     border: 2px solid var(--border-color);
     border-radius: 8px;
     width: 100px !important;
@@ -33,9 +34,9 @@
     flex: 0 0 100px !important;
     overflow: hidden;
 }
-  
+
 /* 헤더 정보 영역 */
-.sheet.custom-system .header-fields {
+.custom-system .header-fields {
     background: var(--panel-bg);
     padding: 10px;
     border: 1px solid var(--border-color);
@@ -44,7 +45,7 @@
 }
   
 /* 기본 정보 패널 */
-.sheet.custom-system .Basicinfo {
+.custom-system .Basicinfo {
     background: var(--panel-bg);
     border: 1px solid var(--border-color);
     border-radius: 6px;
@@ -53,7 +54,7 @@
 }
   
 /* 클래스 정보 패널 */
-.sheet.custom-system .class {
+.custom-system .class {
     background: var(--panel-bg);
     border: 1px solid var(--border-color);
     border-radius: 6px;
@@ -61,7 +62,7 @@
 }
   
 /* 속성 그리드 */
-.sheet.custom-system .attribute {
+.custom-system .attribute {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 8px;
@@ -72,8 +73,8 @@
 }
   
 /* 입력 필드 */
-.sheet.custom-system input[type="text"],
-.sheet.custom-system input[type="number"] {
+.custom-system input[type="text"],
+.custom-system input[type="number"] {
     background: var(--input-bg);
     border: 1px solid var(--border-color);
     border-radius: 4px;
@@ -82,15 +83,15 @@
     color: var(--text-primary);
 }
   
-.sheet.custom-system input[type="text"]:focus,
-.sheet.custom-system input[type="number"]:focus {
+.custom-system input[type="text"]:focus,
+.custom-system input[type="number"]:focus {
     border-color: var(--highlight-yellow);
     outline: none;
     box-shadow: 0 0 0 2px rgba(240, 196, 25, 0.4);
 }
   
 /* 레이블 */
-.sheet.custom-system label {
+.custom-system label {
     color: var(--text-secondary);
     font-weight: 500;
     margin-bottom: 4px;
@@ -98,7 +99,7 @@
 }
   
 /* 버튼 */
-.sheet.custom-system button {
+.custom-system button {
     background: var(--highlight-yellow);
     color: var(--highlight-yellow-text);
     border: none;
@@ -108,24 +109,24 @@
     cursor: pointer;
 }
   
-.sheet.custom-system button:hover {
+.custom-system button:hover {
     background: #ffe468;
 }
   
 /* 탭 컨테이너 */
-.sheet.custom-system .tabbedPanel {
+.custom-system .tabbedPanel {
     margin-top: 10px;
 }
   
 /* 탭 헤더 */
-.sheet.custom-system .tab-header {
+.custom-system .tab-header {
     display: flex;
     gap: 4px;
     border-bottom: 1px solid var(--border-color);
     margin-bottom: 10px;
 }
   
-.sheet.custom-system .tab-header button {
+.custom-system .tab-header button {
     background: var(--panel-bg);
     color: var(--text-secondary);
     border: 1px solid var(--border-color);
@@ -134,21 +135,21 @@
     padding: 8px 16px;
 }
   
-.sheet.custom-system .tab-header button.active {
+.custom-system .tab-header button.active {
     background: var(--main-bg);
     color: var(--highlight-yellow);
     border-bottom: 2px solid var(--highlight-yellow);
 }
   
 /* 아이템 컨테이너 */
-.sheet.custom-system .itemContainer {
+.custom-system .itemContainer {
     border: 1px solid var(--border-color);
     border-radius: 6px;
     margin-top: 10px;
 }
   
 /* 아이템 헤더 */
-.sheet.custom-system .item-header {
+.custom-system .item-header {
     background: var(--input-bg);
     padding: 8px;
     border-bottom: 1px solid var(--border-color);
@@ -159,7 +160,7 @@
 }
   
 /* 아이템 행 */
-.sheet.custom-system .item-row {
+.custom-system .item-row {
     padding: 8px;
     border-bottom: 1px solid var(--border-color);
     display: grid;
@@ -168,23 +169,23 @@
     align-items: center;
 }
   
-.sheet.custom-system .item-row:last-child {
+.custom-system .item-row:last-child {
     border-bottom: none;
 }
   
-.sheet.custom-system .item-row:hover {
+.custom-system .item-row:hover {
     background: var(--panel-bg);
 }
   
 /* 상태 표시 */
-.sheet.custom-system .stat-value {
+.custom-system .stat-value {
     font-weight: bold;
     text-align: right;
     padding-right: 8px;
 }
   
 /* FP/HP/EN 게이지 */
-.sheet.custom-system .resource-gauge {
+.custom-system .resource-gauge {
     width: 100%;
     height: 20px;
     background: var(--input-bg);
@@ -192,25 +193,25 @@
     overflow: hidden;
 }
   
-.sheet.custom-system .resource-gauge-bar {
+.custom-system .resource-gauge-bar {
     height: 100%;
     transition: width 0.3s ease;
 }
   
-.sheet.custom-system .resource-gauge-fp .resource-gauge-bar {
+.custom-system .resource-gauge-fp .resource-gauge-bar {
     background: #4a90e2;
 }
   
-.sheet.custom-system .resource-gauge-hp .resource-gauge-bar {
+.custom-system .resource-gauge-hp .resource-gauge-bar {
     background: #e25555;
 }
   
-.sheet.custom-system .resource-gauge-en .resource-gauge-bar {
+.custom-system .resource-gauge-en .resource-gauge-bar {
     background: #50c878;
 }
   
 /* 격자 레이아웃 */
-.sheet.custom-system .grid-container {
+.custom-system .grid-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 10px;
@@ -218,7 +219,7 @@
 }
   
 /* 메모 영역 */
-.sheet.custom-system textarea {
+.custom-system textarea {
     width: 100%;
     min-height: 100px;
     border: 1px solid var(--border-color);
@@ -229,7 +230,7 @@
     color: var(--text-primary);
 }
 
-.sheet header.sheet-header {
+.custom-system header.sheet-header {
     display: flex;
     flex-direction: row;
     align-items: flex-start;
@@ -237,7 +238,7 @@
 }
 
 /* 아이템 링크 스타일 */
-.content-link[data-type="Item"] {
+.custom-system .content-link[data-type="Item"] {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -251,22 +252,22 @@
   border: 1px solid var(--border-color);
 }
 
-.content-link[data-type="Item"]:hover {
+.custom-system .content-link[data-type="Item"]:hover {
   background: #4f4f4f;
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   border-color: var(--highlight-yellow);
 }
 
-.content-link[data-type="Item"] img {
+.custom-system .content-link[data-type="Item"] img {
   width: 20px;
   height: 20px;
   border-radius: 4px;
   object-fit: cover;
 }
 
-/* 툴팁 스타일도 수정하고 싶다면 */
-.tooltip {
+/* 툴팁 스타일도 수정 */
+.custom-system .tooltip {
   background: var(--input-bg);
   color: var(--text-primary);
   padding: 8px 12px;
@@ -276,7 +277,7 @@
 
 
 /* 탭 네비게이션 스타일 */
-.sheet-tabs.tabs {
+.custom-system .sheet-tabs.tabs {
   display: flex;
   gap: 4px;
   margin-bottom: 15px;
@@ -286,11 +287,11 @@
   border-bottom: none;
 }
 
-.sheet-tabs.tabs span {
+.custom-system .sheet-tabs.tabs span {
   flex: 1;
 }
 
-.sheet-tabs.tabs a.item {
+.custom-system .sheet-tabs.tabs a.item {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -307,48 +308,48 @@
   width: 100%;
 }
 
-.sheet-tabs.tabs a.classitem::before {
+.custom-system .sheet-tabs.tabs a.classitem::before {
   content: '\f19d'; 
   font-family: 'Font Awesome 5 Free';
   font-weight: 900;
 }
 
-.sheet-tabs.tabs a.guardian::before {
+.custom-system .sheet-tabs.tabs a.guardian::before {
   content: '\f544'; 
   font-family: 'Font Awesome 5 Free';
   font-weight: 900;
 }
 
-.sheet-tabs.tabs a.weapontab::before {
+.custom-system .sheet-tabs.tabs a.weapontab::before {
   content: '\f71d'; 
   font-family: 'Font Awesome 5 Free';
   font-weight: 900;
 }
 
-.sheet-tabs.tabs a.specialtytab::before {
+.custom-system .sheet-tabs.tabs a.specialtytab::before {
   content: '\f0e7'; 
   font-family: 'Font Awesome 5 Free';
   font-weight: 900;
 }
 
-.sheet-tabs.tabs a.option::before {
+.custom-system .sheet-tabs.tabs a.option::before {
   content: '\f085'; 
   font-family: 'Font Awesome 5 Free';
   font-weight: 900;
 }
 
-.sheet-tabs.tabs a.itemtab::before {
+.custom-system .sheet-tabs.tabs a.itemtab::before {
   content: '\f466'; 
   font-family: 'Font Awesome 5 Free';
   font-weight: 900;
 }
 
-.sheet-tabs.tabs a.item:hover {
+.custom-system .sheet-tabs.tabs a.item:hover {
   background: #4f4f4f;
   transform: translateY(-1px);
 }
 
-.sheet-tabs.tabs a.item.active {
+.custom-system .sheet-tabs.tabs a.item.active {
   background: var(--highlight-yellow);
   color: var(--highlight-yellow-text);
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -357,29 +358,29 @@
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {
-  .sheet-tabs.tabs {
+  .custom-system .sheet-tabs.tabs {
       flex-wrap: wrap;
   }
   
-  .sheet-tabs.tabs span {
+  .custom-system .sheet-tabs.tabs span {
       flex: 0 0 calc(33.333% - 4px);
   }
 }
 
-.activeEffects {
+.custom-system .activeEffects {
   background: var(--panel-bg);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 12px;
 }
 
-.activeEffects table {
+.custom-system .activeEffects table {
   width: 100%;
   border-spacing: 0;
   border-collapse: separate;
 }
 
-.activeEffects .custom-system-cell-boldTitle {
+.custom-system .activeEffects .custom-system-cell-boldTitle {
   color: var(--highlight-yellow);
   font-size: 13px;
   font-weight: 500;
@@ -388,23 +389,23 @@
   border-radius: 6px;
 }
 
-.activeEffects .custom-system-dynamicRow {
+.custom-system .activeEffects .custom-system-dynamicRow {
   transition: all 0.2s ease;
 }
 
-.activeEffects .custom-system-dynamicRow:hover {
+.custom-system .activeEffects .custom-system-dynamicRow:hover {
   background: #4f4f4f;
   transform: translateY(-1px);
 }
 
-.activeEffects .custom-system-cell {
+.custom-system .activeEffects .custom-system-cell {
   padding: 8px 12px;
   color: var(--text-primary);
   font-size: 14px;
   border-bottom: 1px solid var(--border-color);
 }
 
-.activeEffects .custom-system-conditional-modifier {
+.custom-system .activeEffects .custom-system-conditional-modifier {
   appearance: none;
   width: 18px;
   height: 18px;
@@ -416,12 +417,12 @@
   transition: all 0.2s ease;
 }
 
-.activeEffects .custom-system-conditional-modifier:checked {
+.custom-system .activeEffects .custom-system-conditional-modifier:checked {
   background: #4a90e2;
   border-color: #4a90e2;
 }
 
-.activeEffects .custom-system-conditional-modifier:checked::after {
+.custom-system .activeEffects .custom-system-conditional-modifier:checked::after {
   content: '✓';
   position: absolute;
   top: 50%;
@@ -431,17 +432,17 @@
   font-size: 12px;
 }
 
-.activeEffects .custom-system-tooltip i {
+.custom-system .activeEffects .custom-system-tooltip i {
   color: var(--text-secondary);
   font-size: 14px;
   transition: all 0.2s ease;
 }
 
-.activeEffects .custom-system-tooltip i:hover {
+.custom-system .activeEffects .custom-system-tooltip i:hover {
   color: var(--text-primary);
 }
 
-.activeEffects .custom-system-tooltip-box {
+.custom-system .activeEffects .custom-system-tooltip-box {
   background: var(--main-bg);
   border: 1px solid var(--border-color);
   border-radius: 6px;
@@ -449,149 +450,165 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
-.activeEffects .custom-system-tooltip-list-item {
+.custom-system .activeEffects .custom-system-tooltip-list-item {
   color: var(--text-primary);
   font-size: 13px;
   padding: 4px 8px;
 }
 
-.activeEffects .custom-system-dynamic-table-row-icons {
+.custom-system .activeEffects .custom-system-dynamic-table-row-icons {
   display: flex;
   gap: 8px;
   align-items: center;
   justify-content: flex-end;
 }
 
-/*컴팩트 파운드리*/
+.custom-system .custom-system-label-root {
+  color: white;
+}
 
-#actors .directory-item.actor {
+.custom-system .custom-system-cell-alignLeft > .custom-system-rollable > .custom-system-field, 
+.custom-system .custom-system-cell-alignLeft > .custom-system-field {
+  color: white;
+}
+
+.custom-system .flex-group-center {
+  color: white;
+}
+
+.custom-system .custom-system-field > label {
+  color: white;
+}
+
+.custom-system .sheet {
+  opacity: 0.97;
+}
+
+.custom-system .custom-system-rich-content {
+  color: white; 
+}
+
+
+/* --- Foundry UI 오버라이드 (범위 제한) --- */
+/* 이 스타일들은 시스템이 활성화되었을 때만 적용됩니다. */
+body.system-custom-system #actors .directory-item.actor {
   position: relative;
   line-height: 24px;
 }
 
-#actors .directory-item.actor .thumbnail {
+body.system-custom-system #actors .directory-item.actor .thumbnail {
   clip: rect(12px, 48px, 36px, 0);
   position: absolute;
   margin-top: -11px;
   margin-bottom: -14px;
 }
 
-#actors .directory-item.actor .document-name {
+body.system-custom-system #actors .directory-item.actor .document-name {
   position: relative;
   padding-top: 2px;
   padding-left: 56px;
 }
 
-#actors li.folder > .folder-header {
+body.system-custom-system #actors li.folder > .folder-header {
   padding: 0 6px;
 }
 
-/*# sourceMappingURL=optional-compact-actors.css.map */
-
-#scenes .directory-item.scene {
+body.system-custom-system #scenes .directory-item.scene {
   line-height: 30px;
   height: 30px;
   margin-bottom: 3px;
 }
 
-#scenes .directory-item.scene .document-name {
+body.system-custom-system #scenes .directory-item.scene .document-name {
   line-height: 24px;
 }
 
-#scenes li.folder > .folder-header {
+body.system-custom-system #scenes li.folder > .folder-header {
   padding: 0 6px;
 }
 
-#items .directory-item.item {
+body.system-custom-system #items .directory-item.item {
   position: relative;
   line-height: 24px;
 }
 
-#items .directory-item.item .thumbnail {
+body.system-custom-system #items .directory-item.item .thumbnail {
   clip: rect(12px, 48px, 36px, 0);
   position: absolute;
   margin-top: -11px;
   margin-bottom: -14px;
 }
 
-#items .directory-item.item .document-name {
+body.system-custom-system #items .directory-item.item .document-name {
   position: relative;
   padding-top: 2px;
   padding-left: 56px;
 }
 
-#items li.folder > .folder-header {
+body.system-custom-system #items li.folder > .folder-header {
   padding: 0 6px;
 }
 
-/*# sourceMappingURL=optional-compact-items.css.map */
-
-#journal .directory-item.journalentry {
+body.system-custom-system #journal .directory-item.journalentry {
   position: relative;
   line-height: 24px;
 }
 
-#journal li.folder > .folder-header {
+body.system-custom-system #journal li.folder > .folder-header {
   padding: 0 6px;
 }
 
-/*# sourceMappingURL=optional-compact-journal.css.map */
-
-#macros-popout .directory-item.macro {
+body.system-custom-system #macros-popout .directory-item.macro {
   position: relative;
   line-height: 24px;
 }
 
-#macros-popout .directory-item.macro .thumbnail {
+body.system-custom-system #macros-popout .directory-item.macro .thumbnail {
   clip: rect(12px, 48px, 36px, 0);
   position: absolute;
   margin-top: -11px;
   margin-bottom: -14px;
 }
 
-#macros-popout .directory-item.macro .document-name {
+body.system-custom-system #macros-popout .directory-item.macro .document-name {
   position: relative;
   padding-top: 2px;
   padding-left: 56px;
 }
 
-#macros-popout li.folder > .folder-header {
+body.system-custom-system #macros-popout li.folder > .folder-header {
   padding: 0 6px;
 }
 
-/*# sourceMappingURL=optional-compact-macros.css.map */
-
-#tables .directory-item.rolltable {
+body.system-custom-system #tables .directory-item.rolltable {
   position: relative;
   line-height: 24px;
 }
 
-#tables .directory-item.rolltable .thumbnail {
+body.system-custom-system #tables .directory-item.rolltable .thumbnail {
   clip: rect(12px, 48px, 36px, 0);
   position: absolute;
   margin-top: -11px;
   margin-bottom: -14px;
 }
 
-#tables .directory-item.rolltable .document-name {
+body.system-custom-system #tables .directory-item.rolltable .document-name {
   position: relative;
   padding-top: 2px;
   padding-left: 56px;
 }
 
-#tables li.folder > .folder-header {
+body.system-custom-system #tables li.folder > .folder-header {
   padding: 0 6px;
 }
 
-/*# sourceMappingURL=optional-compact-tables.css.map */
-
-#sidebar.smaller-sidebar {
+body.system-custom-system #sidebar.smaller-sidebar {
   min-width: 315px !important;
   padding-left: 0 !important;
-  background: linear-gradient(270deg, rgba(0, 0, 0, 0.8191877092633928) 0%, rgba(0, 0, 0, 0.437955216266194) 90%, rgba(0, 0, 0, 0.237955216266194) 96%, rgba(0, 0, 0, 0) 100%) !important;
+  background: linear-gradient(270deg, rgba(0, 0, 0, 0.819) 0%, rgba(0, 0, 0, 0.438) 90%, rgba(0, 0, 0, 0.238) 96%, rgba(0, 0, 0, 0) 100%) !important;
 }
 
-#sidebar.smaller-sidebar #sidebar-tabs>.item {
+body.system-custom-system #sidebar.smaller-sidebar #sidebar-tabs>.item {
   height: 27px;
   min-width: 27px;
   font-size: .85em;
@@ -599,7 +616,6 @@
 
 
 /*# 배너 페이드아웃 */
-
 .yourTurnBanner.removing{
   opacity: 1;
   animation-name: fadeOutAlternate;
@@ -608,12 +624,8 @@
 }
 
 @keyframes fadeOutAlternate{
-  from{
-    opacity: 1;
-  }
-  to{
-    opacity: 0;
-  }
+  from{ opacity: 1; }
+  to{ opacity: 0; }
 }
 
 .yourTurnImg.removing{
@@ -644,7 +656,7 @@
     font-family: 'SF_HambakSnow', monospace;
 }
 
-/* 챗 로그 변경 */
+/* 챗 로그 변경 *//* 챗 로그 변경 */
 #chat-log {
   background: rgba(26, 26, 26, 0.85); /* 어두운 배경 */
   border: none;
@@ -708,7 +720,6 @@
   overflow: hidden;
 }
 
-
 .breakbutton * {
   color: inherit !important;
   background-color: inherit !important;
@@ -717,19 +728,13 @@
   text-align: inherit !important;
 }
 
-
-.breakbutton:hover {
-  background-color: #d32f2f !important;
-}
-
+.breakbutton:hover { background-color: #d32f2f !important; }
 .breakbutton:active {
   background-color: #d32f2f !important;
   transform: translateY(4px) !important;
 }
 
-
-/* .지형 편집기 */
-
+/* 지형 편집기 */
 .terrain-editor-menu {
   background: rgba(0, 0, 0, 0.8);
   border: 1px solid var(--border-color);
@@ -807,27 +812,13 @@
   margin: 0.125rem;
 }
 
-.terrain-effect i {
-  margin-right: 0.25rem;
-}
-
-.terrain-effect.positive {
-  background: var(--positive-green);
-  color: white;
-}
-
-.terrain-effect.negative {
-  background: var(--negative-red);
-  color: white;
-}
-
-.terrain-effect.neutral {
-  background: var(--neutral-grey);
-  color: white;
-}
+.terrain-effect i { margin-right: 0.25rem; }
+.terrain-effect.positive { background: var(--positive-green); color: white; }
+.terrain-effect.negative { background: var(--negative-red); color: white; }
+.terrain-effect.neutral { background: var(--neutral-grey); color: white; }
 
 /* 상태창 스테이터스 이펙트 */
-.status-effects-container {
+.custom-system .status-effects-container {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
@@ -837,93 +828,810 @@
   border-radius: 4px;
 }
 
-.status-effect-icon {
+.custom-system .status-effect-icon {
   width: 24px;
   height: 24px;
   cursor: pointer;
   transition: transform 0.2s;
 }
 
-.status-effect-icon:hover {
-  transform: scale(1.1);
-}
-
-.status-effect-icon img {
+.custom-system .status-effect-icon:hover { transform: scale(1.1); }
+.custom-system .status-effect-icon img {
   width: 100%;
   height: 100%;
   border-radius: 4px;
 }
 
-.custom-system-label-root {
-  color: white;
-}
-
-.custom-system-cell-alignLeft > .custom-system-rollable > .custom-system-field, .custom-system-cell-alignLeft > .custom-system-field {
-  color: white;
-}
-
-.flex-group-center {
-  color: white;
-}
-
-.custom-system-field > label {
-  color: white;
-}
-
-.sheet {
-  opacity: 0.97;
-}
-
-.custom-system-rich-content {
-  color: white; 
-}
 
 /* ★★★★★ 글자색 완벽 분리 제어 ★★★★★ */
+/* 이 규칙들은 시스템 활성화 시에만 적용됩니다. */
 
 /* 2. 일반 채팅(시스템 카드가 아닌 것)은 무조건 밝은 회색으로 설정 */
-#chat-log .message .message-content:not(:has(.mcs-card)) {
+body.system-custom-system #chat-log .message .message-content:not(:has(.mcs-card)) {
   color: #e0e0e0 !important;
 }
-#chat-log .message.whisper .message-content:not(:has(.mcs-card)) {
+body.system-custom-system #chat-log .message.whisper .message-content:not(:has(.mcs-card)) {
     color: #a8d8ef !important;
 }
 
-/* 
-  3. 우리의 시스템 카드(.mcs-card)에 기본 글자색을 어두운 색으로 지정합니다.
-     '모든 자식(*)'을 건드리지 않고 카드 자체에만 지정하여 상속되도록 합니다.
-     이것이 이전 코드의 문제점을 해결하는 핵심입니다.
-*/
-#chat-log .message .mcs-card {
+/* 3. 시스템 카드(.mcs-card)에 기본 글자색을 어두운 색으로 지정 */
+body.system-custom-system #chat-log .message .mcs-card {
     color: #4a4a4a !important;
 }
 
-/* 
-  4. 예외 처리: 특별한 색상이 필요한 부분만 '더 구체적인 규칙'으로 다시 덮어씁니다.
-     이 규칙들은 상속받은 색상보다 우선순위가 높습니다.
-*/
-
-/* 
-   4a. 최종 롤 결과값 (어두운 배경)과 그 내부 텍스트는 '흰색'으로 강제합니다.
-       이 규칙은 부모로부터 상속받은 어두운 색상을 덮어씁니다.
-*/
-#chat-log .message .mcs-card div[style*="background: #4a4a4a"],
-#chat-log .message .mcs-card div[style*="background: #4a4a4a"] * {
+/* 4. 예외 처리: 특별한 색상이 필요한 부분만 '더 구체적인 규칙'으로 다시 덮어쓰기 */
+/* 4a. 최종 롤 결과값 (어두운 배경)과 그 내부 텍스트는 '흰색'으로 강제 */
+body.system-custom-system #chat-log .message .mcs-card div[style*="background: #4a4a4a"],
+body.system-custom-system #chat-log .message .mcs-card div[style*="background: #4a4a4a"] * {
     color: white !important;
 }
 
-/* 4b. 크리티컬/펌블, 명중/회피 결과 (컬러 배경)와 그 내부 텍스트는 '흰색'으로 강제합니다. */
-#chat-log .message .mcs-card div[style*="background: #dc3545"] *,
-#chat-log .message .mcs-card div[style*="background: #28a745"] * {
+/* 4b. 크리티컬/펌블, 명중/회피 결과 (컬러 배경)와 그 내부 텍스트는 '흰색'으로 강제 */
+body.system-custom-system #chat-log .message .mcs-card div[style*="background: #dc3545"] *,
+body.system-custom-system #chat-log .message .mcs-card div[style*="background: #28a745"] * {
     color: white !important;
 }
 
-/* 4c. JS에서 직접 지정한 '명중! / 회피!' 텍스트의 원래 색상을 유지합니다. */
-#chat-log .message .mcs-card div[style*="color: rgb(40, 167, 69)"],
-#chat-log .message .mcs-card div[style*="color: #28a745"] {
+/* 4c. JS에서 직접 지정한 '명중! / 회피!' 텍스트의 원래 색상을 유지 */
+body.system-custom-system #chat-log .message .mcs-card div[style*="color: rgb(40, 167, 69)"],
+body.system-custom-system #chat-log .message .mcs-card div[style*="color: #28a745"] {
     color: #28a745 !important;
 }
-#chat-log .message .mcs-card div[style*="color: rgb(220, 53, 69)"],
-#chat-log .message .mcs-card div[style*="color: #dc3545"] {
+body.system-custom-system #chat-log .message .mcs-card div[style*="color: rgb(220, 53, 69)"],
+body.system-custom-system #chat-log .message .mcs-card div[style*="color: #dc3545"] {
     color: #dc3545 !important;
 }
 
+
+/* ★★★★★ 카드 시스템 V2 스타일 (클래스 기반) ★★★★★ */
+
+/* --- 카드 공통 스타일 --- */
+.mcs-card {
+    font-family: 'Pretendard', sans-serif;
+}
+
+.mcs-card-wrapper {
+    background: #f0f0f0;
+    border-radius: 10px;
+    padding: 8px;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.mcs-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    background: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.mcs-card-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4a4a4a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mcs-card-content {
+    background: white;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-top: 6px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+/* --- 태그 스타일 --- */
+.mcs-tag {
+    flex-shrink: 0;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.mcs-tag-grey {
+    background: #e9ecef;
+    color: #4a4a4a;
+}
+
+.mcs-tag-lightgrey {
+    background: #f8f9fa;
+    color: #666;
+}
+
+/* --- 주사위 굴림 관련 --- */
+.mcs-roll-formula {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 6px;
+}
+
+.mcs-roll-result {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 4px 8px;
+}
+
+.mcs-dice-tray {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.mcs-die {
+    width: 24px;
+    height: 24px;
+    background: white;
+    border: 2px solid #4a4a4a;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 12px;
+    color: black;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.mcs-roll-total {
+    font-size: 16px;
+    font-weight: bold;
+    padding: 2px 8px;
+    background: #4a4a4a;
+    color: white;
+    border-radius: 4px;
+}
+
+/* ★★★★★ 카드 시스템 V2 스타일 (Multi-Attack) ★★★★★ */
+
+/* --- 접기/펴기(Collapsible) 카드 공통 스타일 --- */
+.mcs-collapsible-header {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+}
+.mcs-collapsible-header:hover {
+    background-color: rgba(0,0,0,0.05); /* JS의 white 와 합쳐져서 연한 회색이 됨 */
+}
+.mcs-collapsible-content {
+    display: block;
+    overflow: hidden;
+    transition: all 0.3s ease-out;
+}
+.mcs-collapsible-card.collapsed .mcs-collapsible-content {
+    height: 0 !important;
+    opacity: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    border-width: 0 !important;
+    visibility: hidden;
+}
+.mcs-collapse-icon {
+    transition: transform 0.3s ease;
+}
+.mcs-collapsible-card.collapsed .mcs-collapse-icon {
+    transform: rotate(-90deg);
+}
+
+/* --- 공격 카드 헤더 --- */
+.mcs-card-header-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-grow: 1;
+    overflow: hidden; /* 제목이 길 경우 대비 */
+}
+.mcs-collapse-icon {
+    color: #4a4a4a;
+}
+.mcs-card-subheader {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+/* --- 태그 그룹 --- */
+.mcs-tag-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE and Edge */
+}
+.mcs-tag-group::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+.mcs-tag-group-special {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding-top: 6px;
+    border-top: 1px solid #eee;
+}
+.mcs-tag-special {
+    color: #4a4a4a;
+    border: 1px solid #ddd;
+}
+
+
+/* --- 카드 내부 섹션(무기효과, 특기 등) --- */
+.mcs-subsection {
+    margin-top: 6px;
+    background: rgba(0,0,0,0.03);
+    border-radius: 6px;
+}
+.mcs-subsection-header {
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.mcs-subsection-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #666;
+}
+.mcs-subsection-content {
+    padding: 0 10px 10px 10px;
+}
+.mcs-weapon-effect {
+    font-size: 13px;
+    color: #212529;
+    margin: 0;
+    padding-top: 4px;
+}
+
+
+/* --- 특기 버튼 카드 --- */
+.mcs-button-card {
+    background: white;
+    margin-top: 6px;
+    padding: 8px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    cursor: pointer;
+}
+.mcs-button-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.mcs-button-card-title-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.mcs-button-card-title {
+    font-weight: bold;
+    color: #4a4a4a;
+    font-size: 14px;
+}
+.mcs-info-icon {
+    color: #666;
+}
+.mcs-button-card .mcs-tag-group {
+    margin-top: 4px;
+}
+
+/* --- 대상 섹션 --- */
+.mcs-target-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 6px;
+}
+.mcs-target-section {
+    padding: 8px; /* .mcs-card-content 의 패딩을 상속받으므로 재정의 */
+}
+.mcs-target-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+.mcs-target-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.mcs-target-label {
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap;
+}
+.mcs-target-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.mcs-target-name {
+    font-size: 14px;
+    color: #4a4a4a;
+    font-weight: bold;
+}
+
+/* --- 주사위 굴림 (수정치 포함) --- */
+.mcs-roll-total-label {
+    font-size: 12px;
+    opacity: 0.9;
+}
+.mcs-icon-small {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+/* --- 크리티컬 / 펌블 --- */
+.mcs-crit-fumble-banner {
+    color: white;
+    padding: 4px;
+    border-radius: 4px;
+    margin-top: 6px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+.mcs-crit-fumble-banner.critical {
+    background: #28a745;
+}
+.mcs-crit-fumble-banner.fumble {
+    background: #dc3545;
+}
+.mcs-fumble-message {
+    color: #dc3545;
+    text-align: center;
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* ★★★★★ 카드 시스템 V2 스타일 (Damage Roll) ★★★★★ */
+
+.mcs-dice-tray {
+    overflow-x: auto;
+    flex-wrap: nowrap; /* 데미지 주사위가 많을 경우를 대비 */
+    padding-right: 8px; /* 스크롤 공간 확보 */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE and Edge */
+}
+.mcs-dice-tray::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+
+.mcs-roll-total.damage {
+    flex-shrink: 0;
+    background: #dc3545; /* 데미지는 붉은색으로 강조 */
+    color: white;
+    white-space: nowrap;
+}
+
+/* ★★★★★ 카드 시스템 V2 스타일 (Specialty Selection Dialog) ★★★★★ */
+
+/* --- 다이얼로그 창 --- */
+.mcs-specialty-selection-dialog .window-content {
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    background: #f0f0f0; /* 배경색 통일 */
+}
+.mcs-specialty-selection-dialog .dialog-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* --- 탭 --- */
+.mcs-dialog-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+    background: #e9ecef;
+    padding: 6px;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+.mcs-dialog-tab {
+    flex: 1;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.5);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #666;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+.mcs-dialog-tab.active {
+    background: white;
+    color: #4a4a4a;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-weight: 500;
+}
+.mcs-dialog-tab-count {
+    background: rgba(0,0,0,0.1);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+/* --- 탭 컨텐츠 --- */
+.mcs-dialog-content-wrapper {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+.mcs-dialog-tab-content {
+    display: none;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 12px;
+}
+.mcs-dialog-tab-content.active {
+    display: grid;
+}
+.mcs-dialog-empty-message {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 20px;
+    color: #6c757d;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 6px;
+}
+
+/* --- 선택 가능한 카드 (각 항목) --- */
+.mcs-selectable-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
+}
+.mcs-selectable-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+}
+.mcs-selectable-card-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    cursor: pointer;
+    accent-color: #4a4a4a;
+}
+.mcs-selectable-card-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* --- 카드 내부 요소들 (뱃지, 태그 등) --- */
+.mcs-card-header-line {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.mcs-badge {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    border: 1px solid transparent;
+}
+.mcs-badge-specialty { border-color: #28a745; background-color: #28a7451a; color: #28a745; }
+.mcs-badge-weapon    { border-color: #dc3545; background-color: #dc35451a; color: #dc3545; }
+.mcs-badge-option    { border-color: #6c757d; background-color: #6c757d1a; color: #6c757d; }
+.mcs-badge-bless     { border-color: #ffc107; background-color: #ffc1071a; color: #ffc107; }
+.mcs-badge-item      { border-color: #007bff; background-color: #007bff1a; color: #007bff; }
+.mcs-badge-level     { background-color: #e9ecef; color: #4a4a4a; }
+.mcs-badge-limit {
+    background: #28a7451a; color: #28a745;
+}
+.mcs-badge-limit[data-limit-zero="true"] {
+    background: #dc35451a; color: #dc3545;
+}
+
+.mcs-tag-info {
+    background: #f1f3f5;
+    color: #495057;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+}
+.mcs-tag-info i {
+    margin-right: 4px;
+    opacity: 0.7;
+}
+
+.mcs-description-box {
+    font-size: 13px;
+    color: #343a40;
+    line-height: 1.5;
+    padding: 8px 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 3px solid #ffc107;
+    display: flex;
+    gap: 8px;
+}
+.mcs-description-box i {
+    margin-top: 3px;
+    color: #ffc107;
+}
+.mcs-description-box p {
+    margin: 0;
+    padding: 0;
+}
+
+/* ★★★★★ 카드 시스템 V2 스타일 (Cost Confirmation Dialog) ★★★★★ */
+
+.mcs-cost-dialog .dialog-content {
+    background: #f0f0f0;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.mcs-cost-list {
+    background: white;
+    padding: 10px 15px;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.mcs-cost-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid #f1f3f5;
+}
+.mcs-cost-list .mcs-cost-item:last-child {
+    border-bottom: none;
+}
+
+.mcs-cost-label {
+    font-size: 13px;
+    font-weight: 500;
+}
+.mcs-cost-label.fp      { color: #2c7be5; }
+.mcs-cost-label.hp      { color: #dc3545; }
+.mcs-cost-label.en      { color: #6c757d; }
+.mcs-cost-label.bullets { color: #ffc107; }
+.mcs-cost-label.effect  { color: #198754; }
+
+.mcs-cost-value {
+    font-weight: bold;
+    font-size: 14px;
+    color: #343a40;
+}
+
+.mcs-cost-limit-section {
+    background: #f8f9fa;
+    padding: 10px 15px;
+    border-radius: 6px;
+    margin-top: 10px;
+    border: 1px solid #e9ecef;
+}
+
+.mcs-cost-limit-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 13px;
+}
+.mcs-cost-limit-item label {
+    flex-grow: 1;
+}
+.mcs-cost-limit-value {
+    color: #666;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+/* ★★★★★ 카드 시스템 V2 스타일 (Defense Controls) ★★★★★ */
+
+.mcs-defense-controls {
+    margin-top: 8px;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-top: 1px solid #e9ecef;
+}
+
+.mcs-defense-input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.mcs-defense-select,
+.mcs-defense-modifier {
+    padding: 6px 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background: white;
+    color: #495057;
+    font-size: 13px;
+    height: 32px;
+}
+
+.mcs-defense-select {
+    flex: 2;
+}
+
+.mcs-defense-modifier {
+    flex: 1;
+}
+
+/* --- 공용 버튼 스타일 --- */
+.mcs-button {
+    width: 100%;
+    padding: 8px;
+    background: white;
+    color: #4a4a4a;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+.mcs-button:hover {
+    border-color: #aaa;
+    background-color: #fdfdfd;
+}
+
+.mcs-defense-button {
+    margin-top: 6px;
+}
+
+/* ★★★★★ 카드 시스템 V2 스타일 (Manual Damage Roll) ★★★★★ */
+
+.mcs-card-title-group {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.mcs-roll-info {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 4px;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE and Edge */
+}
+.mcs-roll-info::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
+/* ★★★★★ 카드 시스템 V2 스타일 (Defense Result Card) ★★★★★ */
+
+.mcs-comparison-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #e9ecef;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #4a4a4a;
+    white-space: nowrap;
+}
+.mcs-comparison-tag .vs {
+    font-weight: bold;
+    color: #adb5bd;
+}
+.mcs-comparison-tag .attack {
+    color: #dc3545;
+}
+.mcs-comparison-tag .defense {
+    color: #2c7be5;
+}
+
+.mcs-final-result {
+    text-align: center;
+    margin-top: 8px;
+    padding: 6px;
+    font-weight: bold;
+    font-size: 14px;
+    border-radius: 4px;
+}
+.mcs-final-result.success {
+    color: #198754;
+    background-color: #1987541a;
+}
+.mcs-final-result.failure {
+    color: #dc3545;
+    background-color: #dc35451a;
+}
+
+/* defense-result 내부의 card-content에만 적용되는 추가 패딩 */
+.defense-result .mcs-card-content {
+    padding-bottom: 4px; /* 최종 결과와 데미지 버튼 사이 간격 조절 */
+}
+
+/* ★★★★★ 카드 시스템 V2 스타일 (Damage Content Section) ★★★★★ */
+
+.mcs-damage-section {
+    margin-top: 12px;
+    border-top: 2px solid #e9ecef;
+    padding-top: 12px;
+}
+
+/* ★★★★★ 카드 시스템 V2 스타일 (Damage Roll Dialog) ★★★★★ */
+
+.mcs-damage-roll-dialog .dialog-content {
+    background: #f0f0f0;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.mcs-dialog-section {
+    background: white;
+    padding: 12px 15px;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.mcs-dialog-section:not(:last-child) {
+    margin-bottom: 10px;
+}
+
+.mcs-weapon-details {
+    color: #6c757d;
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.mcs-target-list strong {
+    font-size: 14px;
+    color: #343a40;
+}
+.mcs-target-names {
+    margin-top: 5px;
+    color: #495057;
+    font-size: 13px;
+}

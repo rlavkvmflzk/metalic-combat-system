@@ -1377,28 +1377,46 @@ const activateChatListeners = (message, html, data) => {
     // 방어 굴림 버튼 기능
     html.find('.mcs-defense-button').on('click', async event => {
         event.preventDefault();
-        const button = $(event.currentTarget);
-        // ★★★★★ 오류 수정 지점 ★★★★★
-        // defense-controls가 아니라 mcs-target-section에서 데이터를 찾아야 합니다.
-        const targetSection = button.closest('.mcs-target-section, .defense-result'); 
-        
-        const defenseType = targetSection.find('.mcs-defense-select').val();
-        const modifier = parseInt(targetSection.find('.mcs-defense-modifier').val()) || 0;
-        
-        // 버튼과 부모 요소들로부터 모든 데이터 속성을 읽어옵니다.
-        const data = { ...button.data(), ...targetSection.data() };
+        console.log('--- [MCS DEBUG] Defense Button Clicked ---'); // 디버깅 로그 추가
 
-        // ★★★★★ 오류 수정 지점 ★★★★★
-        // DefenseManager를 직접 호출해야 합니다.
-        await DefenseManager.performDefense(
-            data.targetId,
-            data.attackRoll,
+        const button = $(event.currentTarget);
+        const controlGroup = button.closest('.mcs-defense-controls'); // 버튼이 속한 그룹 찾기
+
+        const targetId = button.data('targetId');
+        const attackRoll = button.data('attackRoll');
+        const isCritical = button.data('isCritical');
+        const isFumble = button.data('isFumble');
+        const combatData = button.data('combatData');
+
+        const defenseType = controlGroup.find('.mcs-defense-select').val();
+        const modifier = parseInt(controlGroup.find('.mcs-defense-modifier').val()) || 0;
+
+        // 디버깅: 전달할 데이터 확인
+        console.log('[MCS DEBUG] Event Listener Data:', {
+            targetId,
+            attackRoll,
             defenseType,
             modifier,
-            data.isCritical,
-            data.isFumble,
-            decodeURIComponent(data.combatData)
+            isCritical,
+            isFumble,
+            combatData: decodeURIComponent(combatData)
+        });
+
+        if (!targetId || isNaN(attackRoll)) {
+            console.error('[MCS DEBUG] Critical data missing!', { targetId, attackRoll });
+            return;
+        }
+
+        await DefenseManager.performDefense(
+            targetId,
+            attackRoll,
+            defenseType,
+            modifier,
+            isCritical,
+            isFumble,
+            combatData
         );
+        console.log('--- [MCS DEBUG] DefenseManager.performDefense() Called ---');
     });
 };
 

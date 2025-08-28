@@ -70,275 +70,160 @@ export class DefenseManager {
             ui.notifications.error("메시지 업데이트 중 오류가 발생했습니다.");
         }
     }
+static async performDefense(targetId, attackRoll, defenseType, modifier = 0, isAttackCritical = false, isAttackFumble = false, combatDataStr = null, fixedDefenseRoll = null, skipSpecialtyDialog = false, originalDiceResults = null, messageId = null) {
+    if (!this.socket) {
+        console.error('[DefenseManager] Socket not initialized');
+        return null;
+    }
 
-    static async performDefense(targetId, attackRoll, defenseType, modifier = 0, isAttackCritical = false, isAttackFumble = false, combatDataStr = null, fixedDefenseRoll = null, skipSpecialtyDialog = false, originalDiceResults = null) {
-        console.log('[DefenseManager] performDefense called with:', {
-            targetId,
-            attackRoll,
-            defenseType,
-            modifier,
-            isAttackCritical,
-            isAttackFumble,
-            combatDataStr,
-            fixedDefenseRoll,
-            originalDiceResults
-        });
-    
-        if (!this.socket) {
-            console.error('[DefenseManager] Socket not initialized');
-            return null;
-        }
-    
-        let attackerStats = { baseAttack: 0, attackType: 'hit' };
-        if (combatDataStr) {
-            try {
-                const combatData = JSON.parse(decodeURIComponent(combatDataStr));
-                console.log('Parsed combat data:', combatData);
-    
-                if (combatData.attacker) {
-                    attackerStats = {
-                        baseAttack: combatData.attacker.baseAttack || 0,
-                        attackType: combatData.attacker.attackType || 'hit'
-                    };
-                }
-            } catch (error) {
-                console.error('[performDefense] Error parsing combat data:', error);
+    let attackerStats = { baseAttack: 0, attackType: 'hit' };
+    if (combatDataStr) {
+        try {
+            const combatData = JSON.parse(decodeURIComponent(combatDataStr));
+            if (combatData.attacker) {
+                attackerStats = {
+                    baseAttack: combatData.attacker.baseAttack || 0,
+                    attackType: combatData.attacker.attackType || 'hit'
+                };
             }
+        } catch (error) { console.error('[performDefense] Error parsing combat data:', error); }
+    }
+    const defenseOption = this.DEFENSE_OPTIONS[defenseType];
+    const defenderToken = canvas.tokens.placeables.find(t => t.id === targetId);
+    const defender = defenderToken ? defenderToken.actor : game.actors.get(targetId);
+    if (!defender) {
+        console.error('[performDefense] Defender not found');
+        return null;
+    }
+
+    let selectedSpecialties = [];
+    if (fixedDefenseRoll === null && !skipSpecialtyDialog) {
+        selectedSpecialties = await this._showDefenseSpecialtyDialog(defender);
+        if (selectedSpecialties?.length) {
+            const totalCost = this._calculateSpecialtyCost(selectedSpecialties);
+            if (!await this._handleSpecialtyCost(totalCost, defender)) return;
+            await this._activateDefenseEffects(defender, selectedSpecialties);
         }
+    }
+
+    const defenseValue = DiceHelper.safeParseInt(defender.system.props[defenseOption.prop]);
+    const diceBonus = DiceHelper.safeParseInt(defender.system.props.defdiebonus, 0);
+    const numBonus = DiceHelper.safeParseInt(defender.system.props.defnumbonus, 0);
+    const totalDefense = defenseValue + Number(modifier) + numBonus;
     
-        const defenseOption = this.DEFENSE_OPTIONS[defenseType];
-        if (!defenseOption) {
-            console.error('[performDefense] Invalid defense type:', defenseType);
-            return null;
+    let defenseRoll;
+    let baseDiceResults;
+    let baseDiceTotal;
+
+    if (fixedDefenseRoll !== null) {
+        baseDiceResults = (originalDiceResults || [3, 4]).map(r => ({ result: r, active: true }));
+        baseDiceTotal = baseDiceResults.reduce((sum, die) => sum + die.result, 0);
+        defenseRoll = new Roll("0");
+        await defenseRoll.evaluate();
+        defenseRoll._total = fixedDefenseRoll;
+    } else {
+        const diceFormula = `2d6${diceBonus > 0 ? ` + ${diceBonus}d6` : ''}+${totalDefense}`;
+        defenseRoll = new Roll(diceFormula);
+        await defenseRoll.evaluate();
+        baseDiceResults = defenseRoll.terms[0].results;
+        baseDiceTotal = baseDiceResults.reduce((sum, die) => sum + die.result, 0);
+        if (game.dice3d) {
+            await game.dice3d.showForRoll(defenseRoll, game.user, true);
         }
-    
-        const defenderToken = canvas.tokens.placeables.find(t => t.id === targetId);
-        const defender = defenderToken ? defenderToken.actor : game.actors.get(targetId);
-    
-        if (!defender) {
-            console.error('[performDefense] Defender not found');
-            return null;
-        }
+    }
 
-        // 특기 선택 다이얼로그 표시
-        let selectedSpecialties = [];
-        if (fixedDefenseRoll === null && !skipSpecialtyDialog) {
-            selectedSpecialties = await this._showDefenseSpecialtyDialog(defender);
-            if (selectedSpecialties?.length) {
-                const totalCost = this._calculateSpecialtyCost(selectedSpecialties);
-                if (!await this._handleSpecialtyCost(totalCost, defender)) {
-                    return;
-                }
-                await this._activateDefenseEffects(defender, selectedSpecialties);
-            }
-        }
-    
-        const defenseValue = DiceHelper.safeParseInt(defender.system.props[defenseOption.prop]);
-        const diceBonus = DiceHelper.safeParseInt(defender.system.props.defdiebonus, 0);
-        const numBonus = DiceHelper.safeParseInt(defender.system.props.defnumbonus, 0);
-        const totalDefense = defenseValue + Number(modifier) + numBonus;
-    
-        console.log('[performDefense] Defense values:', {
-            baseDefense: defenseValue,
-            diceBonus,
-            numBonus,
-            totalDefense
-        });
-    
-        let defenseRoll;
-        let baseDiceResults;
-        let baseDiceTotal;
-        
-        if (fixedDefenseRoll !== null) {
-            // 고정된 방어 값 사용
-            defenseRoll = new Roll(`${fixedDefenseRoll}`);
-            
-            if (originalDiceResults) {
-                // 원본 주사위 결과가 있다면 사용
-                defenseRoll.terms[0].results = originalDiceResults.map(result => ({result}));
-            }
-            
-            await defenseRoll.evaluate({ async: true });
-            baseDiceResults = defenseRoll.terms[0].results;
-            baseDiceTotal = originalDiceResults ? 
-                originalDiceResults.reduce((sum, result) => sum + result, 0) :
-                Math.min(Math.max(fixedDefenseRoll - totalDefense, 2), 12);
-            
-            // 주사위 결과 HTML 생성을 위한 terms 설정
-            defenseRoll.terms = [{
-                faces: 6,
-                results: baseDiceResults
-            }];
-        } else {
-            // 실제 주사위 굴림
-            const diceFormula = `2d6${diceBonus > 0 ? ` + ${diceBonus}d6` : ''}+${totalDefense}`;
-            defenseRoll = new Roll(diceFormula);
-            await defenseRoll.evaluate({ async: true });
-        
-            // 기본 주사위 결과 확인
-            baseDiceResults = defenseRoll.terms[0].results;
-            baseDiceTotal = baseDiceResults.reduce((sum, die) => sum + die.result, 0);
-        
-            if (game.dice3d) {
-                try {
-                    await game.dice3d.showForRoll(defenseRoll, game.user, true);
-                } catch (error) {
-                    console.error('[performDefense] Error showing 3D dice:', error);
-                }
-            }
-        }
+    const isDefenseFumble = baseDiceTotal <= (DiceHelper.safeParseInt(defender.system.props.pumble, 2) + DiceHelper.safeParseInt(defender.system.props.pumblemod, 0));
+    const defCritThreshold = DiceHelper.safeParseInt(defender.system.props.defcrit, 0) + DiceHelper.safeParseInt(defender.system.props.defcritmod, 0);
+    const isDefenseCritical = defCritThreshold > 0 && baseDiceTotal >= defCritThreshold;
+    let success = false;
+    if (isAttackFumble) success = true;
+    else if (isDefenseFumble) success = false;
+    else if (isDefenseCritical) success = true;
+    else if (isAttackCritical) success = false;
+    else success = defenseRoll.total >= attackRoll;
+    const margin = Math.abs(attackRoll - defenseRoll.total);
 
-        // 펌블 체크
-        const pumbleThreshold = DiceHelper.safeParseInt(defender.system.props.pumble, 2);
-        const pumbleMod = DiceHelper.safeParseInt(defender.system.props.pumblemod, 0);
-        const adjustedPumbleThreshold = Math.max(2, pumbleThreshold + pumbleMod);
-        const isDefenseFumble = baseDiceTotal <= adjustedPumbleThreshold;
+    const resultContent = this._getDefenseResultHtml({
+        defender, defenderToken, defenseOption, defenseType, defenseValue,
+        fixedDefenseRoll, modifierText: this._getModifierText(numBonus, modifier),
+        diceBonus, roll: defenseRoll, attackRoll, success, margin, attackerStats, 
+        isDefenseFumble, isDefenseCritical, isAttackFumble, isAttackCritical, 
+        selectedSpecialties, combatDataStr,
+        getResultText: () => this._getResultText(isDefenseFumble, isDefenseCritical, isAttackFumble, isAttackCritical, baseDiceTotal, (DiceHelper.safeParseInt(defender.system.props.pumble, 2) + DiceHelper.safeParseInt(defender.system.props.pumblemod, 0)), defCritThreshold),
+        baseDiceResults: baseDiceResults
+    });
 
-        // 방어 크리티컬 체크
-        const defCritBase = DiceHelper.safeParseInt(defender.system.props.defcrit, 0);
-        const defCritMod = DiceHelper.safeParseInt(defender.system.props.defcritmod, 0);
-        const adjustedDefCritThreshold = defCritBase + defCritMod;
-        const isDefenseCritical = adjustedDefCritThreshold > 0 && baseDiceTotal >= adjustedDefCritThreshold;
+    let messageToUpdate = null;
+    if (messageId) {
+        messageToUpdate = game.messages.get(messageId);
+    } else {
+        const messages = game.messages.contents.slice().reverse();
+        messageToUpdate = messages.find(m => m.content.includes(`data-target-id="${targetId}"`) && m.content.includes(`data-attack-roll="${attackRoll}"`));
+    }
 
-        // 방어 결과 계산
-        let success = false;
-        if (isAttackFumble) {
-            success = true;
-        } else if (isDefenseFumble) {
-            success = false;
-        } else if (isDefenseCritical) {
-            success = true;
-        } else if (isAttackCritical) {
-            success = false;
-        } else {
-            success = defenseRoll.total >= attackRoll;
-        }
-
-        const margin = Math.abs(attackRoll - defenseRoll.total);
-
-        const resultParams = {
-            defender,
-            defenderToken,
-            defenseOption,
-            defenseType,
-            defenseValue,
-            fixedDefenseRoll,
-            modifierText: this._getModifierText(numBonus, modifier),
-            diceBonus,
-            roll: defenseRoll,
-            diceResults: fixedDefenseRoll ? [] : this._getDiceResults(defenseRoll),
-            attackRoll,
-            success,
-            margin,
-            attackerStats,
-            isDefenseFumble,
-            isDefenseCritical,
-            isAttackFumble,
-            isAttackCritical,
-            selectedSpecialties,
-            combatDataStr,
-            getResultText: () => this._getResultText(
-                isDefenseFumble, 
-                isDefenseCritical, 
-                isAttackFumble, 
-                isAttackCritical, 
-                baseDiceTotal, 
-                adjustedPumbleThreshold, 
-                adjustedDefCritThreshold
-            )
-        };
-
-        const resultContent = this._getDefenseResultHtml(resultParams);
-
-        // 원본 메시지 업데이트
-        const messages = game.messages.contents.reverse();
-        for (const message of messages) {
-            if (!message.content.includes('defense-controls')) continue;
-        
-            const content = message.content;
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(content, 'text/html');
-        
-            const defenseControl = doc.querySelector(
-                `.defense-controls button[data-target-id="${targetId}"][data-attack-roll="${attackRoll}"]`
-            )?.closest('.defense-controls');
-        
-            if (defenseControl) {
-                defenseControl.outerHTML = resultContent;
-        
-                // socketlib를 통해 GM에게 업데이트 요청
-                await this.socket.executeForEveryone('updateChatMessageAsGM', message.id, {
-                    content: doc.body.innerHTML
-                });
-        
-                // 이 시점에서 남아있는 모든 방어 컨트롤을 다시 확인
-                const updatedDoc = parser.parseFromString(doc.body.innerHTML, 'text/html');
-                const remainingControls = updatedDoc.querySelectorAll('.defense-controls:has(button)').length;
-        
-                // 남은 컨트롤이 없을 때만 데미지 계산 및 특기 해제
-                if (remainingControls === 0) {
-                    try {
-                        const combatData = JSON.parse(decodeURIComponent(combatDataStr));
-                        console.log('Parsed combat data:', combatData);
-        
-                        if (combatData?.attacker) {
-                            const hitTargets = [];
-                            const targetSections = updatedDoc.querySelectorAll('.target-section');
-                            targetSections.forEach(section => {
-                                if (section.textContent.includes('명중!')) {
-                                    const targetName = section.querySelector('.collapsible-header span')
-                                        ?.textContent.replace('대상:', '').trim();
-                                    if (targetName) {
-                                        hitTargets.push(targetName);
-                                    }
-                                }
-                            });
-        
-                            const isCritical = updatedDoc.querySelector('.attack-message')
-                                ?.textContent.includes('크리티컬!') || false;
-        
-                            const attackingUserId = message.user?.id;
-                            if (!attackingUserId) {
-                                console.error('Could not find attacking user ID');
-                                return;
-                            }
-        
-                            const validUserIds = [attackingUserId];
-        
-                            const dialogData = {
-                                weaponData: {
-                                    name: combatData.weapon.name,
-                                    weapontype: combatData.weapon.weapontype,
-                                    weaponfinaldmg: combatData.weapon.weaponfinaldmg,
-                                    sidedamage: combatData.weapon.sidedamage,
-                                    weaponfx: combatData.weapon.weaponfx,
-                                    atk: combatData.weapon.atk,
-                                    part: combatData.weapon.part,
-                                    weaponkind: combatData.weapon.weaponkind,
-                                    sniping: combatData.weapon.sniping,
-                                    armorignore: combatData.weapon.armorignore
-                                },
-                                attackerId: combatData.attacker.id,
-                                hitTargets,
-                                isCritical,
-                                defenseSpecialties: selectedSpecialties,
-                                defenderId: defender.id  
-                            };
-        
-                            console.log('Sending dialog data:', dialogData);
-                            await this.socket.executeForUsers("showDamageDialog", validUserIds, dialogData);
-                        }
-                    } catch (error) {
-                        console.error('Error processing defense result:', error);
-                        ui.notifications.error("방어 결과 처리 중 오류가 발생했습니다.");
-                    }
-                }
-                break;
-            }
-        }
-        
+    if (!messageToUpdate) {
+        console.error(`[DefenseManager] 업데이트할 메시지를 찾을 수 없습니다. (Target: ${targetId})`);
         return resultContent;
     }
+    
+    // ★★★ 이 부분이 가장 중요합니다 ★★★
+    // 수정 작업을 하기 직전에, 메시지의 '최신' 내용을 다시 가져옵니다.
+    const currentContent = game.messages.get(messageToUpdate.id).content;
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(currentContent, 'text/html');
+    const targetSection = doc.querySelector(`.mcs-target-section[data-target-id="${targetId}"]`);
+    
+    if (targetSection) {
+        const defenseControl = targetSection.querySelector('.mcs-defense-controls');
+        if (defenseControl) {
+            defenseControl.outerHTML = resultContent;
+            await this.socket.executeForEveryone('updateChatMessageAsGM', messageToUpdate.id, { content: doc.body.innerHTML });
+
+            const updatedDoc = new DOMParser().parseFromString(doc.body.innerHTML, 'text/html');
+            if (updatedDoc.querySelectorAll('.mcs-defense-controls').length === 0) {
+                try {
+                    const combatData = JSON.parse(decodeURIComponent(combatDataStr));
+                    if (combatData?.attacker) {
+                        const hitTargets = [];
+                        updatedDoc.querySelectorAll('.mcs-target-section').forEach(section => {
+                            if (section.querySelector('.mcs-final-result.failure')) {
+                                const targetName = section.querySelector('.mcs-target-name')?.textContent.trim();
+                                if (targetName) hitTargets.push(targetName);
+                            }
+                        });
+                        const isCritical = updatedDoc.querySelector('.mcs-crit-fumble-banner.critical') !== null;
+                        const attackingUserId = messageToUpdate.author?.id || game.users.find(u => u.isGM).id;
+                        
+                        const weaponData = combatData.weapon || {};
+                        const dialogData = {
+                            weaponData: {
+                                name: weaponData.name || '알 수 없는 무기',
+                                weapontype: weaponData.weapontype || '',
+                                weaponfinaldmg: weaponData.weaponfinaldmg || '0',
+                                sidedamage: weaponData.sidedamage || '0',
+                                atk: weaponData.atk || '0',
+                                part: weaponData.part || '',
+                            },
+                            attackerId: combatData.attacker.id,
+                            hitTargets,
+                            isCritical,
+                            defenseSpecialties: selectedSpecialties,
+                            defenderId: defender.id
+                        };
+                        
+                        await this.socket.executeForUsers("showDamageDialog", [attackingUserId], dialogData);
+                    }
+                } catch (error) {
+                    console.error('Error processing defense result:', error);
+                    ui.notifications.error("방어 결과 처리 중 오류가 발생했습니다.");
+                }
+            }
+        }
+    }
+    
+    return resultContent;
+}
+
 /**
  * 방어 시 사용할 수 있는 특기, 아이템 등을 선택하는 다이얼로그를 표시합니다.
  * @param {Actor} defender - 방어자 액터
@@ -755,14 +640,14 @@ static _getDiceHtml(result) {
 static _getDefenseResultHtml(params) {
     const {
         defender, defenderToken, defenseOption, defenseType, defenseValue,
-        fixedDefenseRoll, modifierText, diceBonus, roll, diceResults,
+        fixedDefenseRoll, modifierText, diceBonus, roll,
         attackRoll, success, margin, isDefenseFumble, isDefenseCritical,
         isAttackFumble, isAttackCritical, getResultText, damageContent,
         attackerStats = { baseAttack: 0, attackType: 'hit' },
-        selectedSpecialties = [], combatDataStr
+        selectedSpecialties = [], combatDataStr, baseDiceResults
     } = params;
 
-    // 사용된 특기 목록 HTML 생성
+    // 사용된 특기 목록 HTML 생성 (기존과 동일)
     const specialtiesHtml = selectedSpecialties?.length > 0
         ? `<div class="mcs-collapsible-card mcs-subsection collapsed">
                <div class="mcs-collapsible-header mcs-subsection-header">
@@ -778,17 +663,24 @@ static _getDefenseResultHtml(params) {
            </div>`
         : '';
 
-    // 최종 결과 텍스트 및 클래스 결정
+    // 최종 결과 텍스트 및 클래스 결정 (기존과 동일)
     const resultText = success ? `회피! (차이: ${margin})` : `명중! (차이: ${margin})`;
     const resultClass = success ? 'success' : 'failure';
 
-    // 크리티컬/펌블 뱃지 HTML 생성
+    // 크리티컬/펌블 뱃지 HTML 생성 (기존과 동일)
     const critFumbleBanner = (isDefenseFumble || isDefenseCritical || isAttackFumble || isAttackCritical)
         ? `<div class="mcs-crit-fumble-banner ${isDefenseFumble || isAttackCritical ? 'fumble' : 'critical'}">
                ${getResultText()}
            </div>`
         : '';
         
+    // ▼▼▼▼▼ [핵심 수정] 고정값일 때와 아닐 때 표시될 내용을 분리합니다. ▼▼▼▼▼
+    const isFixed = fixedDefenseRoll !== null;
+    const formulaHtml = isFixed
+        ? `<div class="mcs-roll-formula">이베이전 고정값</div>` // "이베이전 고정값" 문구만 표시
+        : `<div class="mcs-roll-formula">2d6${diceBonus > 0 ? ` + ${diceBonus}d6` : ''} + ${defenseValue}${modifierText}</div>`; // 일반 굴림 공식 표시
+    // ▲▲▲▲▲ [핵심 수정 완료] ▲▲▲▲▲
+
     return `
         <div class="mcs-card-wrapper mcs-collapsible-card defense-result collapsed"
              data-target-id="${defenderToken?.id || defender.id}"
@@ -815,14 +707,14 @@ static _getDefenseResultHtml(params) {
 
             <div class="mcs-collapsible-content">
                 <div class="mcs-card-content">
-                    <div class="mcs-roll-formula">2d6${diceBonus > 0 ? ` + ${diceBonus}d6` : ''} + ${defenseValue}${modifierText}</div>
+                    ${formulaHtml}
                     <div class="mcs-roll-result">
                         <div class="mcs-dice-tray">
-                            ${(params.baseDiceResults ? params.baseDiceResults.map(die => `<div class="roll die mcs-die">${die.result}</div>`) : roll.terms.filter(t => t.faces === 6).flatMap(t => t.results).map(r => `<div class="roll die mcs-die">${r.result}</div>`)).join('')}
+                            ${(baseDiceResults ? baseDiceResults.map(die => `<div class="roll die mcs-die">${die.result}</div>`) : '')}
                         </div>
                         <div class="mcs-roll-total">
                             ${roll.total}
-                            ${fixedDefenseRoll !== null ? '<i class="fas fa-edit mcs-icon-small" title="수정된 값"></i>' : ''}
+                            ${isFixed ? '<i class="fas fa-lock mcs-icon-small" title="고정된 값"></i>' : ''}
                         </div>
                     </div>
 
@@ -836,7 +728,6 @@ static _getDefenseResultHtml(params) {
         </div>
     `;
 }
-
 /**
  * 데미지 굴림을 계산하고 그 결과를 표시하는 HTML 컨텐츠를 생성합니다.
  * @param {object} weaponData - 무기 정보

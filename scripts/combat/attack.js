@@ -45,133 +45,81 @@ export class CombatManager {
         }
         return 'hit';  // 백병의 주무장, 백병의 부무장인 경우
     }
+static async performMultiAttack(attackerIds, targetIds, userSelectedAttackType, modifier = 0, weaponCrit = null, atkcritMod = '0', attackPart = '', attackerItem = null, selectedSpecialties = [], fixedRoll = null, originalDiceResults) {
+    // 사용자가 선택한 타입이 있으면 그것을 사용, 없으면 부위에 따라 자동 결정
+    const attackType = userSelectedAttackType || this._determineAttackType(attackPart);
 
-    static async performMultiAttack(attackerIds, targetIds, userSelectedAttackType, modifier = 0, weaponCrit = null, atkcritMod = '0', attackPart = '', attackerItem = null, selectedSpecialties = [], fixedRoll = null, originalDiceResults) {
-        console.log('[performMultiAttack] Starting with params:', {
-            attackerIds,
-            targetIds,
-            userSelectedAttackType,
-            modifier,
-            weaponCrit,
-            atkcritMod,
-            attackPart,
-            attackerItem,
-            selectedSpecialties
-        });
+    if (!attackerItem) {
+        console.error('[performMultiAttack] No weapon data provided');
+        return null;
+    }
 
-        // 사용자가 선택한 타입이 있으면 그것을 사용, 없으면 부위에 따라 자동 결정
-        const attackType = userSelectedAttackType || this._determineAttackType(attackPart);
-        console.log('[performMultiAttack] Using attack type:', attackType);
+    const critModifier = Number(atkcritMod) || 0;
+    const attackOption = this.ATTACK_OPTIONS[attackType];
+    if (!attackOption) {
+        console.error('[performMultiAttack] Invalid attack type:', attackType);
+        return null;
+    }
 
-        if (!attackerItem) {
-            console.error('[performMultiAttack] No weapon data provided');
-            return null;
-        }
+    // 공격자 정보 가져오기
+    const attackerId = attackerIds[0];
+    const attackerToken = canvas.tokens.placeables.find(t => t.id === attackerId);
+    const attacker = attackerToken ? attackerToken.actor : game.actors.get(attackerId);
 
-        let critModifier;
-        try {
-            critModifier = atkcritMod === 'ERROR' ? 0 : Number(atkcritMod) || 0;
-        } catch (error) {
-            console.error('[performMultiAttack] Error processing critModifier:', error);
-            critModifier = 0;
-        }
-        console.log('Critical modifier:', critModifier);
+    if (!attacker) {
+        console.error('[performMultiAttack] Attacker not found:', attackerId);
+        return null;
+    }
 
-        const results = [];
-        const attackOption = this.ATTACK_OPTIONS[attackType];
-        if (!attackOption) {
-            console.error('[performMultiAttack] Invalid attack type:', attackType);
-            return null;
-        }
+    // 공격 굴림 수행
+    const diceBonus = DiceHelper.safeParseInt(attacker.system.props.atkdiebonus, 0);
+    const numBonus = DiceHelper.safeParseInt(attacker.system.props.atknumbonus, 0);
+    const attackValue = DiceHelper.safeParseInt(attacker.system.props[attackOption.prop]);
+    const totalAttack = attackValue + Number(modifier) + numBonus;
 
-        // 공격자 정보 가져오기
-        const attackerId = attackerIds[0]; // 첫 번째 공격자만 사용
-        const attackerToken = canvas.tokens.placeables.find(t => t.id === attackerId);
-        const attacker = attackerToken ? attackerToken.actor : game.actors.get(attackerId);
+    const diceFormula = `2d6${diceBonus > 0 ? ` + ${diceBonus}d6` : ''}+${totalAttack}`;
+    const attackRoll = new Roll(diceFormula);
+    await attackRoll.evaluate();
+    const baseDiceResults = attackRoll.terms[0].results;
+    const baseDiceTotal = baseDiceResults.reduce((sum, die) => sum + die.result, 0);
 
-        if (!attacker) {
-            console.error('[performMultiAttack] Attacker not found:', attackerId);
-            return null;
-        }
+    // 펌블 체크
+    const pumbleThreshold = DiceHelper.safeParseInt(attacker.system.props.pumble, 2);
+    const pumbleMod = DiceHelper.safeParseInt(attacker.system.props.pumblemod, 0);
+    const adjustedPumbleThreshold = Math.max(2, pumbleThreshold + pumbleMod);
+    const isFumble = baseDiceTotal <= adjustedPumbleThreshold;
 
-        // 하나의 공격 굴림만 수행
-        const diceBonus = DiceHelper.safeParseInt(attacker.system.props.atkdiebonus, 0);
-        const numBonus = DiceHelper.safeParseInt(attacker.system.props.atknumbonus, 0);
-        const attackValue = DiceHelper.safeParseInt(attacker.system.props[attackOption.prop]);
-        const totalAttack = attackValue + Number(modifier) + numBonus;
+    // 크리티컬 체크
+    const criticalThreshold = DiceHelper.safeParseInt(weaponCrit, 0);
+    const adjustedCritThreshold = criticalThreshold + critModifier;
+    const isCritical = (criticalThreshold > 0 && baseDiceTotal >= adjustedCritThreshold);
 
-        let attackRoll;
-        let baseDiceResults;
-        let baseDiceTotal;
-    
-        if (fixedRoll !== null) {
-            
-            const diceFormula = `2d6${diceBonus > 0 ? ` + ${diceBonus}d6` : ''}+${totalAttack}`;
-            let originalRoll;
-            
-            if (originalDiceResults) {
-                originalRoll = new Roll(diceFormula);
-                await originalRoll.evaluate();
-                originalRoll.terms[0].results = originalDiceResults;
-            } else {
-                originalRoll = new Roll(diceFormula);
-                await originalRoll.evaluate();
-            }
-        
-            // 기존 주사위 결과 유지
-            baseDiceResults = originalRoll.terms[0].results;
-            baseDiceTotal = baseDiceResults.reduce((sum, die) => sum + die.result, 0);
-        
-            // 새로운 Roll 객체를 올바른 방식으로 생성
-            attackRoll = await Roll.create(diceFormula);
-            await attackRoll.evaluate();
-        
-            // 원본의 terms와 results 복사 - 여기는 원본 코드 그대로 유지
-            attackRoll.terms = originalRoll.terms;
-            
-            // 수정치를 적용한 최종 결과 설정
-            Object.defineProperty(attackRoll, '_total', {
-                value: fixedRoll,
-                configurable: true,
-                enumerable: true
-            });
-        } else {
-            // 기존 주사위 굴림 코드
-            const diceFormula = `2d6${diceBonus > 0 ? ` + ${diceBonus}d6` : ''}+${totalAttack}`;
-            attackRoll = new Roll(diceFormula);
-            await attackRoll.evaluate();
-            baseDiceResults = attackRoll.terms[0].results;
-            baseDiceTotal = baseDiceResults.reduce((sum, die) => sum + die.result, 0);
-        }
-        
+    // 각 타겟에 대한 정보 수집
+    const targets = targetIds.map(id => {
+        const token = canvas.tokens.placeables.find(t => t.id === id);
+        return { token, actor: token?.actor };
+    }).filter(t => t.actor);
 
-        // 펌블 체크
-        const pumbleThreshold = DiceHelper.safeParseInt(attacker.system.props.pumble, 2);
-        const pumbleMod = DiceHelper.safeParseInt(attacker.system.props.pumblemod, 0);
-        const adjustedPumbleThreshold = Math.max(2, pumbleThreshold + pumbleMod);
-        const isFumble = fixedRoll === null ? baseDiceTotal <= adjustedPumbleThreshold : false;
-
-        // 크리티컬 체크
-        const criticalThreshold = DiceHelper.safeParseInt(weaponCrit, 0);
-        const adjustedCritThreshold = criticalThreshold + critModifier;
-        const isCritical = fixedRoll === null ? (criticalThreshold > 0 && baseDiceTotal >= adjustedCritThreshold) : false;
-
-        // 각 타겟에 대한 정보 수집
-        const targets = targetIds.map(targetId => {
-            const targetToken = canvas.tokens.placeables.find(t => t.id === targetId);
-            const target = targetToken ? targetToken.actor : game.actors.get(targetId);
-
-            return {
-                token: targetToken,
-                actor: target
-            };
-        }).filter(t => t.actor); // 유효한 타겟만 필터링
-
-        const attackerResults = {
-            attacker,
-            attackerToken,
-            attackOption,
-            item: attackerItem,
+    const attackerResults = {
+        attacker,
+        attackerToken,
+        attackOption,
+        item: attackerItem,
+        roll: attackRoll,
+        baseValue: attackValue,
+        diceBonus,
+        numBonus,
+        totalMod: numBonus + Number(modifier),
+        isCritical,
+        isFumble,
+        criticalThreshold: adjustedCritThreshold,
+        // ▼▼▼▼▼ [핵심 수정] 오타가 발생했던 부분입니다. ▼▼▼▼▼
+        pumbleThreshold: adjustedPumbleThreshold, // 여기를 수정했습니다.
+        baseDiceTotal,
+        selectedSpecialties: selectedSpecialties || [],
+        targets: targets.map(t => ({
+            target: t.actor,
+            targetToken: t.token,
             roll: attackRoll,
             baseValue: attackValue,
             diceBonus,
@@ -180,64 +128,61 @@ export class CombatManager {
             isCritical,
             isFumble,
             criticalThreshold: adjustedCritThreshold,
-            pumbleThreshold: adjustedPumbleThreshold,
+            pumbleThreshold: adjustedPumbleThreshold, // 여기도 수정했습니다.
             baseDiceTotal,
-            selectedSpecialties: selectedSpecialties || [],
-            targets: targets.map(t => ({
-                target: t.actor,
-                targetToken: t.token,
-                roll: attackRoll,
-                baseValue: attackValue,
-                diceBonus,
-                numBonus,
-                totalMod: numBonus + Number(modifier),
-                isCritical,
-                isFumble,
-                criticalThreshold: adjustedCritThreshold,
-                pumbleThreshold: adjustedPumbleThreshold,
-                baseDiceTotal
-            }))
-        };
+            attacker: attacker,
+            attackerToken: attackerToken,
+            attackerItem: attackerItem,
+            attackType: attackType
+        }))
+    };
+    // ▲▲▲▲▲ [핵심 수정 완료] ▲▲▲▲▲
 
-        results.push(attackerResults);
+    // 1. 먼저 채팅 메시지를 생성합니다.
+    const chatContent = this._getMultiAttackMessageContent([attackerResults], modifier, [attackRoll], attackPart, attackOption, attackType, attacker, attackerItem, critModifier, fixedRoll);
+    const message = await ChatMessage.create({
+        author: game.user.id,
+        speaker: ChatMessage.getSpeaker({ actor: attacker }),
+        content: chatContent,
+        type: CONST.CHAT_MESSAGE_STYLES.ROLL,
+        rolls: [attackRoll]
+    });
 
-        // 무기 효과 재생
-        window.pendingWeaponEffect = async () => {
-            const targets = targetIds.map(targetId => {
-                const targetToken = canvas.tokens.placeables.find(t => t.id === targetId);
-                return targetToken;
-            }).filter(t => t);
+    // GM이 순차적으로 자동 방어를 처리하는 로직
+    if (game.user.isGM) {
+        const evasionTargets = attackerResults.targets.filter(t =>
+            t.target.items?.some(item => item.name === '이베이전' && item.system?.props?.type === "specialty")
+        );
 
-            if (attackerToken && targets.length > 0) {
-                try {
-                    const weaponFx = attackerItem.weaponfx || '기본';
-                    const success = !isFumble;
-
-                    if (game.modules.get('sequencer')?.active) {
-                        await WeaponEffects.playWeaponEffect(
-                            attackerToken,
-                            targets,
-                            weaponFx,
-                            success
-                        );
-                    }
-                } catch (error) {
-                    console.error("Error playing weapon effect:", error);
-                }
+        for (const targetData of evasionTargets) {
+            const target = targetData.target;
+            let defaultDefenseType = 'evasion';
+            if (attackPart?.toLowerCase().includes('원격')) {
+                defaultDefenseType = 'pro';
             }
-        };
+            const defenseBase = target.system.props[defaultDefenseType];
+            const autoDefenseTotal = 7 + parseInt(defenseBase);
 
-        const chatData = {
-            author: game.user.id,
-            speaker: ChatMessage.getSpeaker(),
-            content: this._getMultiAttackMessageContent(results, modifier, [attackRoll], attackPart, attackOption, attackType, attacker, attackerItem, critModifier, fixedRoll),
-            type: CONST.CHAT_MESSAGE_STYLES.ROLL,
-            rolls: [attackRoll]
-        };
+            const combatData = JSON.stringify({
+                attacker: { id: attacker.id, baseAttack: attackerItem.atk || 0, attackType },
+                weapon: attackerItem,
+                isCritical,
+                isFumble
+            });
 
-        await ChatMessage.create(chatData);
-        return results;
+            await DefenseManager.performDefense(
+                targetData.targetToken.id,
+                attackRoll.total,
+                defaultDefenseType, 0,
+                isCritical, isFumble,
+                combatData, autoDefenseTotal, true, [3, 4],
+                message.id
+            );
+        }
     }
+
+    return [attackerResults];
+}
 
     static async performSimpleAttack(attackerIds, attackType, modifier = 0) {
         console.log('[performSimpleAttack] Starting with params:', {
@@ -1082,11 +1027,7 @@ static async _handleEffectsCost(totalCost, attacker, selectedSpecialties) {
 /**
  * 방어자에게 표시될 방어 굴림 컨트롤 UI의 HTML을 생성합니다.
  * @returns {string} HTML 문자열
- */
-static _getDefenseControlsHtml(target, targetToken, attackRoll, isCritical, isFumble, attackPart = '', attackerItem = null, attacker = null, attackerToken = null, attackType, existingDefenseRoll = null) {
-    // =======================================================================
-    // 1. 사전 조건 및 룰 로직 (원본과 100% 동일)
-    // =======================================================================
+ */static _getDefenseControlsHtml(target, targetToken, attackRoll, isCritical, isFumble, attackPart = '', attackerItem = null, attacker = null, attackerToken = null, attackType, existingDefenseRoll = null) {
     if (existingDefenseRoll) {
         return existingDefenseRoll;
     }
@@ -1094,52 +1035,32 @@ static _getDefenseControlsHtml(target, targetToken, attackRoll, isCritical, isFu
     const targetId = targetToken?.id || target?.id;
     const actorId = target?.id || targetToken?.actor?.id;
 
-    if (!targetId && !actorId) {
+    if (!targetId || !actorId) {
         console.warn('No valid target or actor ID found for defense controls.');
         return '';
     }
 
-    // 이베이전 특기 체크
-    const hasEvasion = target.items?.some(item => item.name === '이베이전' && item.system?.props?.type === "specialty");
-
     // 기본 방어 타입 결정 로직
     let defaultDefenseType = 'evasion';
-    if (attackPart) {
-        const partLower = attackPart.toLowerCase();
-        if (partLower.includes('원격의 주무장') || partLower.includes('원격의 부무장')) {
-            defaultDefenseType = 'pro';
-        }
+    if (attackPart?.toLowerCase().includes('원격')) {
+        defaultDefenseType = 'pro';
     }
 
     // 전투 데이터 생성 로직
-    let combatData = '{}';
-    try {
-        if (attackerItem && attacker) {
-            combatData = JSON.stringify({ /* combat data contents */ }); // 내용은 원본과 동일
-        }
-    } catch (error) {
-        console.error('[_getDefenseControlsHtml] Error preparing data:', error);
-    }
+    const combatData = JSON.stringify({
+        attacker: { id: attacker?.id, baseAttack: attackerItem?.atk || 0, attackType: attackType },
+        weapon: attackerItem,
+        isCritical,
+        isFumble
+    });
     
-    // 이베이전 특기 자동 발동 로직 (원본과 100% 동일)
-    if (hasEvasion) {
-        const defenseBase = target.system.props[defaultDefenseType];
-        const autoDefenseTotal = 7 + parseInt(defenseBase);
-        setTimeout(async () => {
-            await DefenseManager.performDefense(
-                targetId, attackRoll, defaultDefenseType, 0,
-                isCritical, isFumble, combatData, autoDefenseTotal, true, [3, 4]
-            );
-        }, 500);
-    }
+    // ★★★★★ 핵심 변경점: 이베이전 자동 발동(setTimeout) 로직을 완전히 삭제했습니다. ★★★★★
 
-    // =======================================================================
-    // 2. HTML 컨텐츠 생성 (스타일링은 CSS 클래스로 분리)
-    // =======================================================================
     const defenseOptions = Object.entries(DefenseManager.DEFENSE_OPTIONS)
         .map(([key, val]) => `<option value="${key}" ${key === defaultDefenseType ? 'selected' : ''}>${val.label}</option>`)
         .join('');
 
+    // 이제 이 함수는 수동 방어 버튼 HTML만 생성합니다.
     return `
         <div class="mcs-defense-controls">
             <div class="mcs-defense-input-group">
@@ -1165,112 +1086,139 @@ static _getDefenseControlsHtml(target, targetToken, attackRoll, isCritical, isFu
  * @param {Actor} attacker - 공격자 액터
  * @returns {Promise<Array>} 선택된 아이템 객체의 배열
  */
-static async _showDamageSpecialtyDialog(attacker) {
-    // =======================================================================
-    // 1. 아이템 필터링 및 데이터 가공 (룰 로직 - 원본과 100% 동일)
-    // =======================================================================
-    const selections = attacker.items
-        .filter(item =>
+    static async _showDamageSpecialtyDialog(attacker) {
+        const selections = attacker.items.filter(item =>
             (item.system?.props?.type === "specialty" && item.system?.props?.sselect === "데미지 굴림") ||
             (item.system?.props?.type === "item" && item.system?.props?.iselect === "데미지 굴림") ||
             (item.system?.props?.type === "weapon" && item.system?.props?.iselect === "데미지 굴림") ||
             (item.system?.props?.type === "option" && item.system?.props?.iselect === "데미지 굴림") ||
             (item.system?.props?.type === "bless" && !item.system?.props?.use && item.system?.props?.iselect === "데미지 굴림")
-        )
-        .map(item => {
-            // 각 아이템 타입을 표준화된 'selection' 객체 형식으로 변환 (원본 로직과 동일)
+        ).map(item => {
             const props = item.system.props;
             switch (props.type) {
-                case "specialty":
-                    return {
-                        id: item.id, name: item.name, type: 'specialty',
-                        cost: props.scost, level: props.slv, target: props.starget,
-                        range: props.srange, timing: props.stiming, effect: props.seffect,
-                        modifiers: item.system.modifiers || [], limit: props.limit, item: item
-                    };
-                case "weapon":
-                    return { id: item.id, name: item.name, type: 'weapon', timing: '공격시', target: props.weapontarget, effect: props.weaponeffect, item: item };
-                case "option":
-                    return { id: item.id, name: item.name, type: 'option', cost: props.optioncost, timing: '공격시', effect: props.optioneffect, item: item };
-                case "bless":
-                    return { id: item.id, name: item.name, type: 'bless', timing: props.btiming, target: props.btarget, effect: props.beffect, item: item, use: props.use || false };
-                default: // "item"
-                    return { id: item.id, name: item.name, type: 'item', cost: props.icost, timing: props.itiming, effect: props.ieffect, item: item };
+                case "specialty": return { id: item.id, name: item.name, type: 'specialty', cost: props.scost, level: props.slv, target: props.starget, range: props.srange, timing: props.stiming, effect: props.seffect, modifiers: item.system.modifiers || [], limit: props.limit, item: item };
+                case "weapon": return { id: item.id, name: item.name, type: 'weapon', timing: '공격시', target: props.weapontarget, effect: props.weaponeffect, item: item };
+                case "option": return { id: item.id, name: item.name, type: 'option', cost: props.optioncost, timing: '공격시', effect: props.optioneffect, item: item };
+                case "bless": return { id: item.id, name: item.name, type: 'bless', timing: props.btiming, target: props.btarget, effect: props.beffect, item: item, use: props.use || false };
+                default: return { id: item.id, name: item.name, type: 'item', cost: props.icost, timing: props.itiming, effect: props.ieffect, item: item };
             }
         });
 
-    if (!selections.length) return [];
+        if (!selections.length) return [];
 
-    const categorized = {
-        specialty: selections.filter(s => s.type === 'specialty'),
-        weapon: selections.filter(s => s.type === 'weapon'),
-        item: selections.filter(s => s.type === 'item'),
-        option: selections.filter(s => s.type === 'option'),
-        bless: selections.filter(s => s.type === 'bless')
-    };
-
-    const labelMap = { specialty: '특기', weapon: '무장', item: '아이템', option: '옵션', bless: '가호' };    
-
-    // =======================================================================
-    // 2. 다이얼로그 생성 및 표시 (구조 및 스타일링 로직)
-    // =======================================================================
-    const tabButtons = Object.entries(categorized).filter(([, items]) => items.length > 0).map(([key, items]) => {
-        const iconMap = { specialty: 'fa-star', weapon: 'fa-sword', item: 'fa-box', option: 'fa-cog', bless: 'fa-crown' };
+        const categorized = {
+            specialty: selections.filter(s => s.type === 'specialty'),
+            weapon: selections.filter(s => s.type === 'weapon'),
+            item: selections.filter(s => s.type === 'item'),
+            option: selections.filter(s => s.type === 'option'),
+            bless: selections.filter(s => s.type === 'bless')
+        };
         const labelMap = { specialty: '특기', weapon: '무장', item: '아이템', option: '옵션', bless: '가호' };
-        return `<button class="mcs-dialog-tab" data-tab="${key}"><i class="fas ${iconMap[key]}"></i> ${labelMap[key]}<span class="mcs-dialog-tab-count">${items.length}</span></button>`;
-    }).join('');
 
-    const tabContents = Object.entries(categorized).map(([key, items]) => `
-        <div class="mcs-dialog-tab-content" data-tab="${key}">
-            ${items.length > 0
-                ? items.map((selection, idx) => this._createEffectOptionHtml(selection, `${key}_${idx}`)).join('')
-                : `<div class="mcs-dialog-empty-message">사용 가능한 ${labelMap[key]}가 없습니다</div>`
-            }
-        </div>`).join('');
+        const tabButtons = Object.entries(categorized).filter(([, items]) => items.length > 0).map(([key, items]) => {
+            const iconMap = { specialty: 'fa-star', weapon: 'fa-sword', item: 'fa-box', option: 'fa-cog', bless: 'fa-crown' };
+            return `<button class="mcs-dialog-tab" data-tab="${key}"><i class="fas ${iconMap[key]}"></i> ${labelMap[key]}<span class="mcs-dialog-tab-count">${items.length}</span></button>`;
+        }).join('');
 
-    const content = `<div class="mcs-dialog-tabs">${tabButtons}</div><div class="mcs-dialog-content-wrapper">${tabContents}</div>`;
+        const tabContents = Object.entries(categorized).map(([key, items]) => `
+            <div class="mcs-dialog-tab-content" data-tab="${key}">
+                ${items.length > 0
+                    // --- 바로 이 부분에서 this._createEffectOptionHtml을 호출하도록 수정 ---
+                    ? items.map((selection, idx) => this._createEffectOptionHtml(selection, `${key}_${idx}`)).join('')
+                    : `<div class="mcs-dialog-empty-message">사용 가능한 ${labelMap[key]}가 없습니다</div>`
+                }
+            </div>`).join('');
 
-    return new Promise((resolve) => {
-        new Dialog({
-            title: "데미지 특기/아이템 선택",
-            content: content,
-            buttons: {
-                apply: {
-                    icon: '<i class="fas fa-check"></i>',
-                    label: "적용",
-                    callback: async (html) => {
-                        const selectedIds = html.find('input[name="selectedEffects"]:checked').map((i, el) => el.value).get();
-                        const selectedItems = selections.filter(s => selectedIds.includes(s.id));
-                        for (const selectedItem of selectedItems) {
-                            if (selectedItem.type === 'bless' && selectedItem.item) {
-                                await selectedItem.item.update({ "system.props.use": true });
+        const content = `<div class="mcs-dialog-tabs">${tabButtons}</div><div class="mcs-dialog-content-wrapper">${tabContents}</div>`;
+
+        return new Promise((resolve) => {
+            new Dialog({
+                title: "데미지 특기/아이템 선택",
+                content: content,
+                buttons: {
+                    apply: {
+                        icon: '<i class="fas fa-check"></i>', label: "적용",
+                        callback: async (html) => {
+                            const selectedIds = html.find('input[name="selectedEffects"]:checked').map((i, el) => el.value).get();
+                            const selectedItems = selections.filter(s => selectedIds.includes(s.id));
+                            for (const selectedItem of selectedItems) {
+                                if (selectedItem.type === 'bless' && selectedItem.item) {
+                                    await selectedItem.item.update({ "system.props.use": true });
+                                }
                             }
+                            resolve(selectedItems);
                         }
-                        resolve(selectedItems);
-                    }
+                    },
+                    cancel: { icon: '<i class="fas fa-times"></i>', label: "취소", callback: () => resolve([]) }
                 },
-                cancel: { icon: '<i class="fas fa-times"></i>', label: "취소", callback: () => resolve([]) }
-            },
-            default: "apply",
-            render: (html) => {
-                const tabs = html.find('.mcs-dialog-tab');
-                const contents = html.find('.mcs-dialog-tab-content');
-                tabs.first().addClass('active');
-                contents.first().addClass('active');
-                tabs.on('click', (event) => {
-                    const tab = $(event.currentTarget);
-                    tabs.removeClass('active');
-                    contents.removeClass('active');
-                    tab.addClass('active');
-                    html.find(`.mcs-dialog-tab-content[data-tab="${tab.data('tab')}"]`).addClass('active');
-                });
-            }
-        }, {
-            classes: ["dialog", "mcs-specialty-selection-dialog"],
-            width: 800, height: 600, resizable: true
-        }).render(true);
-    });
-}
+                default: "apply",
+                render: (html) => {
+                    const tabs = html.find('.mcs-dialog-tab');
+                    const contents = html.find('.mcs-dialog-tab-content');
+                    tabs.first().addClass('active');
+                    contents.first().addClass('active');
+                    tabs.on('click', (event) => {
+                        const tab = $(event.currentTarget);
+                        tabs.removeClass('active');
+                        contents.removeClass('active');
+                        tab.addClass('active');
+                        html.find(`.mcs-dialog-tab-content[data-tab="${tab.data('tab')}"]`).addClass('active');
+                    });
+                }
+            }, { classes: ["dialog", "mcs-specialty-selection-dialog"], width: 800, height: 600, resizable: true }).render(true);
+        });
+    }
+
+    // ▼▼▼▼▼ [핵심 수정] 누락되었던 헬퍼 함수를 클래스의 static 메서드로 추가합니다. ▼▼▼▼▼
+    static _createEffectOptionHtml(selection, idx) {
+        const typeMap = { specialty: '특기', weapon: '무장', option: '옵션', bless: '가호', item: '아이템' };
+        const tags = [
+            { icon: 'fa-clock', value: selection.timing },
+            { icon: 'fa-bullseye', value: selection.target },
+            { icon: 'fa-ruler', value: selection.range },
+            { icon: 'fa-coins', value: selection.cost }
+        ].filter(tag => tag.value).map(tag =>
+            `<span class="mcs-tag mcs-tag-info"><i class="fas ${tag.icon}"></i> ${tag.value.replace('$', '')}</span>`
+        ).join('');
+
+        const limitBadge = (selection.type === 'specialty' && selection.item?.system?.props?.maxlimit > 0 && selection.limit !== undefined)
+            ? `<span class="mcs-badge mcs-badge-limit" data-limit-zero="${selection.limit <= 0}">
+                   <i class="fas fa-redo"></i> ${selection.limit}/${selection.item.system.props.maxlimit}회
+               </span>`
+            : '';
+
+        return `
+            <div class="mcs-selectable-card">
+                <div class="mcs-selectable-card-checkbox">
+                    <input type="checkbox" id="effect${idx}" name="selectedEffects" value="${selection.id}" data-type="${selection.type}">
+                </div>
+                <div class="mcs-selectable-card-details">
+                    <div class="mcs-card-header-line">
+                        <span class="mcs-card-title">${selection.name?.replace('$', '')}</span>
+                        <span class="mcs-badge mcs-badge-${selection.type}">${typeMap[selection.type] || '아이템'}</span>
+                        ${selection.level ? `<span class="mcs-badge mcs-badge-level">LV.${selection.level.replace('$', '')}</span>` : ''}
+                        ${limitBadge}
+                    </div>
+                    <div class="mcs-tag-group">${tags}</div>
+                    ${selection.effect ? `
+                        <div class="mcs-description-box">
+                            <i class="fas fa-star"></i>
+                            <p>${selection.effect.replace('$', '')}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>`;
+    };
+    // ▲▲▲▲▲ [핵심 수정] 함수 추가 완료 ▲▲▲▲▲
+
+    static _determineAttackType(part) {
+        if (!part) return 'hit';
+        const partLower = part.toLowerCase();
+        if (partLower.includes('원격의 주무장') || partLower.includes('원격의 부무장')) {
+            return 'shelling';
+        }
+        return 'hit';
+    }
     
 /**
  * 사용자가 직접 데미지 굴림 버튼을 눌렀을 때 데미지를 계산하고 결과를 표시합니다.

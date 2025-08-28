@@ -685,14 +685,13 @@ static async _handleSpecialtyCost(totalCost, defender, selectedSpecialties) {
 
 static async _activateDefenseEffects(defender, selectedSpecialties) {
     try {
-        // [핵심 수정] 업데이트 전 최신 데이터를 확실하게 가져옵니다.
-        const currentActorData = game.actors.get(defender.id);
-        let activeGroups = currentActorData.system.activeConditionalModifierGroups || [];
+        // ▼▼▼▼▼ [핵심 수정] 데이터를 읽어오는 대상을 defender(토큰 액터)로 변경합니다. ▼▼▼▼▼
+        let activeGroups = defender.system.activeConditionalModifierGroups || [];
+        // ▲▲▲▲▲ [핵심 수정 완료] ▲▲▲▲▲
 
         console.log(`[DEBUG-ACTIVATE] 활성화 전, ${defender.name}의 그룹:`, JSON.parse(JSON.stringify(activeGroups)));
 
         for (const specialty of selectedSpecialties) {
-            // 이제 fullSpecialties 객체에서 직접 modifiers를 가져옵니다.
             const modifierGroups = specialty.item?.system?.modifiers
                 ?.filter(m => m.conditionalGroup)
                 ?.map(m => m.conditionalGroup) || [];
@@ -1046,22 +1045,30 @@ static async _handleDeactivateDefenseEffects(defenderId, specialties) {
     console.log("비활성화할 방어 특기 데이터:", specialties);
 
     if (!game.user.isGM) return;
-    
-    const defender = game.actors.get(defenderId);
-    if (!defender) {
-        console.error('Defender not found for deactivation:', defenderId);
+
+    // 원본 액터를 먼저 찾습니다.
+    const baseActor = game.actors.get(defenderId);
+    if (!baseActor) {
+        console.error('Defender (base actor) not found for deactivation:', defenderId);
         return;
     }
-    
+
+    // ▼▼▼▼▼ [핵심 수정] 업데이트할 실제 대상을 찾습니다. ▼▼▼▼▼
+    // 현재 활성화된 씬에서 해당 액터 ID를 가진 토큰을 찾습니다.
+    const defenderToken = canvas.scene?.tokens.find(t => t.actor?.id === defenderId);
+    // 토큰이 존재하면 토큰의 액터를, 없으면 원본(base) 액터를 최종 대상으로 삼습니다.
+    const defender = defenderToken ? defenderToken.actor : baseActor;
+    console.log(`[DEBUG] 최종 비활성화 대상: ${defender.name} (${defenderToken ? 'Token Actor' : 'Base Actor'})`);
+    // ▲▲▲▲▲ [핵심 수정 완료] ▲▲▲▲▲
+
     try {
+        // 이제부터는 defender 변수가 실제 효과가 적용된 액터를 가리킵니다.
         let activeGroups = defender.system.activeConditionalModifierGroups || [];
         console.log(`[DEBUG] 비활성화 전, ${defender.name}의 활성 그룹:`, JSON.parse(JSON.stringify(activeGroups)));
 
         for (const specialty of specialties) {
-            // ▼▼▼▼▼ [핵심 수정] 더 이상 아이템을 찾지 않고, 미리 추출해 온 그룹 정보를 바로 사용합니다. ▼▼▼▼▼
             const modifierGroups = specialty.modifierGroups || [];
             console.log(`[DEBUG] '${specialty.name}'에서 가져온 비활성화할 그룹:`, modifierGroups);
-            // ▲▲▲▲▲ [핵심 수정 완료] ▲▲▲▲▲
 
             if (modifierGroups.length > 0) {
                 activeGroups = activeGroups.filter(group => !modifierGroups.includes(group));
@@ -1070,6 +1077,7 @@ static async _handleDeactivateDefenseEffects(defenderId, specialties) {
         
         console.log(`[DEBUG] 비활성화 후, ${defender.name}의 활성 그룹:`, JSON.parse(JSON.stringify(activeGroups)));
 
+        // 최종 대상(defender)의 데이터를 업데이트합니다.
         await defender.update({
             "system.activeConditionalModifierGroups": activeGroups
         });

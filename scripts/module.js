@@ -1422,3 +1422,4 @@ const activateChatListeners = (message, html, data) => {
 
 // Foundry VTT의 핵심 Hook: 채팅 메시지가 화면에 그려질 때마다 위의 함수를 실행
 Hooks.on('renderChatMessage', activateChatListeners);
+

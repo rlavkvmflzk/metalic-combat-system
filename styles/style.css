@@ -1,0 +1,929 @@
+/* --- 원본 기반 SF 테마 수정 (전체 코드, 생략 없음) --- */
+
+/* ★ 새로운 색상 변수 정의 */
+:root {
+    --main-bg: #212121; /* 어두운 배경 */
+    --panel-bg: #333333; /* 패널 배경 */
+    --input-bg: #1a1a1a; /* 입력창 배경 */
+    --border-color: #4a4a4a; /* 테두리 */
+    --text-primary: #e0e0e0; /* 밝은 기본 텍스트 */
+    --text-secondary: #a9a9a9; /* 밝은 보조 텍스트 */
+    --highlight-yellow: #f0c419; /* 노란색 강조 */
+    --highlight-yellow-text: #111111; /* 노란색 위 텍스트 */
+    --positive-green: #28a745;
+    --negative-red: #dc3545;
+    --neutral-grey: #6c757d;
+}
+
+/* 시트 기본 스타일 */
+.sheet.custom-system .sheet-container {
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
+    color: var(--text-primary);
+    background: var(--main-bg);
+    padding: 10px;
+    border-radius: 8px;
+}
+  
+/* 프로필 이미지 */
+.sheet.custom-system .profile-img-container {
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    width: 100px !important;
+    height: 100px !important;
+    flex: 0 0 100px !important;
+    overflow: hidden;
+}
+  
+/* 헤더 정보 영역 */
+.sheet.custom-system .header-fields {
+    background: var(--panel-bg);
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+  
+/* 기본 정보 패널 */
+.sheet.custom-system .Basicinfo {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px;
+    margin-bottom: 8px;
+}
+  
+/* 클래스 정보 패널 */
+.sheet.custom-system .class {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px;
+}
+  
+/* 속성 그리드 */
+.sheet.custom-system .attribute {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px;
+}
+  
+/* 입력 필드 */
+.sheet.custom-system input[type="text"],
+.sheet.custom-system input[type="number"] {
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 4px 8px;
+    width: 100%;
+    color: var(--text-primary);
+}
+  
+.sheet.custom-system input[type="text"]:focus,
+.sheet.custom-system input[type="number"]:focus {
+    border-color: var(--highlight-yellow);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(240, 196, 25, 0.4);
+}
+  
+/* 레이블 */
+.sheet.custom-system label {
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 4px;
+    display: block;
+}
+  
+/* 버튼 */
+.sheet.custom-system button {
+    background: var(--highlight-yellow);
+    color: var(--highlight-yellow-text);
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+}
+  
+.sheet.custom-system button:hover {
+    background: #ffe468;
+}
+  
+/* 탭 컨테이너 */
+.sheet.custom-system .tabbedPanel {
+    margin-top: 10px;
+}
+  
+/* 탭 헤더 */
+.sheet.custom-system .tab-header {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 10px;
+}
+  
+.sheet.custom-system .tab-header button {
+    background: var(--panel-bg);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    padding: 8px 16px;
+}
+  
+.sheet.custom-system .tab-header button.active {
+    background: var(--main-bg);
+    color: var(--highlight-yellow);
+    border-bottom: 2px solid var(--highlight-yellow);
+}
+  
+/* 아이템 컨테이너 */
+.sheet.custom-system .itemContainer {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-top: 10px;
+}
+  
+/* 아이템 헤더 */
+.sheet.custom-system .item-header {
+    background: var(--input-bg);
+    padding: 8px;
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 500;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 8px;
+}
+  
+/* 아이템 행 */
+.sheet.custom-system .item-row {
+    padding: 8px;
+    border-bottom: 1px solid var(--border-color);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 8px;
+    align-items: center;
+}
+  
+.sheet.custom-system .item-row:last-child {
+    border-bottom: none;
+}
+  
+.sheet.custom-system .item-row:hover {
+    background: var(--panel-bg);
+}
+  
+/* 상태 표시 */
+.sheet.custom-system .stat-value {
+    font-weight: bold;
+    text-align: right;
+    padding-right: 8px;
+}
+  
+/* FP/HP/EN 게이지 */
+.sheet.custom-system .resource-gauge {
+    width: 100%;
+    height: 20px;
+    background: var(--input-bg);
+    border-radius: 10px;
+    overflow: hidden;
+}
+  
+.sheet.custom-system .resource-gauge-bar {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+  
+.sheet.custom-system .resource-gauge-fp .resource-gauge-bar {
+    background: #4a90e2;
+}
+  
+.sheet.custom-system .resource-gauge-hp .resource-gauge-bar {
+    background: #e25555;
+}
+  
+.sheet.custom-system .resource-gauge-en .resource-gauge-bar {
+    background: #50c878;
+}
+  
+/* 격자 레이아웃 */
+.sheet.custom-system .grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin: 10px 0;
+}
+  
+/* 메모 영역 */
+.sheet.custom-system textarea {
+    width: 100%;
+    min-height: 100px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 8px;
+    resize: vertical;
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+.sheet header.sheet-header {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    flex-wrap: nowrap;
+}
+
+/* 아이템 링크 스타일 */
+.content-link[data-type="Item"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: var(--panel-bg);
+  border-radius: 6px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border-color);
+}
+
+.content-link[data-type="Item"]:hover {
+  background: #4f4f4f;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-color: var(--highlight-yellow);
+}
+
+.content-link[data-type="Item"] img {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+/* 툴팁 스타일도 수정하고 싶다면 */
+.tooltip {
+  background: var(--input-bg);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+
+/* 탭 네비게이션 스타일 */
+.sheet-tabs.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 15px;
+  background: var(--input-bg);
+  padding: 8px;
+  border-radius: 8px;
+  border-bottom: none;
+}
+
+.sheet-tabs.tabs span {
+  flex: 1;
+}
+
+.sheet-tabs.tabs a.item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--panel-bg);
+  border: none;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  text-align: center;
+  width: 100%;
+}
+
+.sheet-tabs.tabs a.classitem::before {
+  content: '\f19d'; 
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+}
+
+.sheet-tabs.tabs a.guardian::before {
+  content: '\f544'; 
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+}
+
+.sheet-tabs.tabs a.weapontab::before {
+  content: '\f71d'; 
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+}
+
+.sheet-tabs.tabs a.specialtytab::before {
+  content: '\f0e7'; 
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+}
+
+.sheet-tabs.tabs a.option::before {
+  content: '\f085'; 
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+}
+
+.sheet-tabs.tabs a.itemtab::before {
+  content: '\f466'; 
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+}
+
+.sheet-tabs.tabs a.item:hover {
+  background: #4f4f4f;
+  transform: translateY(-1px);
+}
+
+.sheet-tabs.tabs a.item.active {
+  background: var(--highlight-yellow);
+  color: var(--highlight-yellow-text);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  font-weight: bold;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .sheet-tabs.tabs {
+      flex-wrap: wrap;
+  }
+  
+  .sheet-tabs.tabs span {
+      flex: 0 0 calc(33.333% - 4px);
+  }
+}
+
+.activeEffects {
+  background: var(--panel-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.activeEffects table {
+  width: 100%;
+  border-spacing: 0;
+  border-collapse: separate;
+}
+
+.activeEffects .custom-system-cell-boldTitle {
+  color: var(--highlight-yellow);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 12px;
+  background: var(--input-bg);
+  border-radius: 6px;
+}
+
+.activeEffects .custom-system-dynamicRow {
+  transition: all 0.2s ease;
+}
+
+.activeEffects .custom-system-dynamicRow:hover {
+  background: #4f4f4f;
+  transform: translateY(-1px);
+}
+
+.activeEffects .custom-system-cell {
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.activeEffects .custom-system-conditional-modifier {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--input-bg);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.activeEffects .custom-system-conditional-modifier:checked {
+  background: #4a90e2;
+  border-color: #4a90e2;
+}
+
+.activeEffects .custom-system-conditional-modifier:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+}
+
+.activeEffects .custom-system-tooltip i {
+  color: var(--text-secondary);
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.activeEffects .custom-system-tooltip i:hover {
+  color: var(--text-primary);
+}
+
+.activeEffects .custom-system-tooltip-box {
+  background: var(--main-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.activeEffects .custom-system-tooltip-list-item {
+  color: var(--text-primary);
+  font-size: 13px;
+  padding: 4px 8px;
+}
+
+.activeEffects .custom-system-dynamic-table-row-icons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/*컴팩트 파운드리*/
+
+#actors .directory-item.actor {
+  position: relative;
+  line-height: 24px;
+}
+
+#actors .directory-item.actor .thumbnail {
+  clip: rect(12px, 48px, 36px, 0);
+  position: absolute;
+  margin-top: -11px;
+  margin-bottom: -14px;
+}
+
+#actors .directory-item.actor .document-name {
+  position: relative;
+  padding-top: 2px;
+  padding-left: 56px;
+}
+
+#actors li.folder > .folder-header {
+  padding: 0 6px;
+}
+
+/*# sourceMappingURL=optional-compact-actors.css.map */
+
+#scenes .directory-item.scene {
+  line-height: 30px;
+  height: 30px;
+  margin-bottom: 3px;
+}
+
+#scenes .directory-item.scene .document-name {
+  line-height: 24px;
+}
+
+#scenes li.folder > .folder-header {
+  padding: 0 6px;
+}
+
+#items .directory-item.item {
+  position: relative;
+  line-height: 24px;
+}
+
+#items .directory-item.item .thumbnail {
+  clip: rect(12px, 48px, 36px, 0);
+  position: absolute;
+  margin-top: -11px;
+  margin-bottom: -14px;
+}
+
+#items .directory-item.item .document-name {
+  position: relative;
+  padding-top: 2px;
+  padding-left: 56px;
+}
+
+#items li.folder > .folder-header {
+  padding: 0 6px;
+}
+
+/*# sourceMappingURL=optional-compact-items.css.map */
+
+#journal .directory-item.journalentry {
+  position: relative;
+  line-height: 24px;
+}
+
+#journal li.folder > .folder-header {
+  padding: 0 6px;
+}
+
+/*# sourceMappingURL=optional-compact-journal.css.map */
+
+#macros-popout .directory-item.macro {
+  position: relative;
+  line-height: 24px;
+}
+
+#macros-popout .directory-item.macro .thumbnail {
+  clip: rect(12px, 48px, 36px, 0);
+  position: absolute;
+  margin-top: -11px;
+  margin-bottom: -14px;
+}
+
+#macros-popout .directory-item.macro .document-name {
+  position: relative;
+  padding-top: 2px;
+  padding-left: 56px;
+}
+
+#macros-popout li.folder > .folder-header {
+  padding: 0 6px;
+}
+
+/*# sourceMappingURL=optional-compact-macros.css.map */
+
+#tables .directory-item.rolltable {
+  position: relative;
+  line-height: 24px;
+}
+
+#tables .directory-item.rolltable .thumbnail {
+  clip: rect(12px, 48px, 36px, 0);
+  position: absolute;
+  margin-top: -11px;
+  margin-bottom: -14px;
+}
+
+#tables .directory-item.rolltable .document-name {
+  position: relative;
+  padding-top: 2px;
+  padding-left: 56px;
+}
+
+#tables li.folder > .folder-header {
+  padding: 0 6px;
+}
+
+/*# sourceMappingURL=optional-compact-tables.css.map */
+
+#sidebar.smaller-sidebar {
+  min-width: 315px !important;
+  padding-left: 0 !important;
+  background: linear-gradient(270deg, rgba(0, 0, 0, 0.8191877092633928) 0%, rgba(0, 0, 0, 0.437955216266194) 90%, rgba(0, 0, 0, 0.237955216266194) 96%, rgba(0, 0, 0, 0) 100%) !important;
+}
+
+#sidebar.smaller-sidebar #sidebar-tabs>.item {
+  height: 27px;
+  min-width: 27px;
+  font-size: .85em;
+}
+
+
+/*# 배너 페이드아웃 */
+
+.yourTurnBanner.removing{
+  opacity: 1;
+  animation-name: fadeOutAlternate;
+  animation-duration: 3s;
+  animation-fill-mode: forwards;
+}
+
+@keyframes fadeOutAlternate{
+  from{
+    opacity: 1;
+  }
+  to{
+    opacity: 0;
+  }
+}
+
+.yourTurnImg.removing{
+  opacity: 1;
+  width: 400px;
+  height: 400px;
+  animation-name: fadeOutAlternate;
+  animation-delay: 1.5s;
+  animation-duration: 3s;
+  animation-fill-mode: forwards;
+}
+
+@font-face {
+    font-family: 'SF_HambakSnow';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2106@1.1/SF_HambakSnow.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+.centered {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: white;
+    border: 16px solid #000000;
+    font-family: 'SF_HambakSnow', monospace;
+}
+
+/* 챗 로그 변경 */
+#chat-log {
+  background: rgba(26, 26, 26, 0.85); /* 어두운 배경 */
+  border: none;
+}
+
+#chat-log .message {
+  background: rgba(44, 44, 44, 0.9); /* 채팅창 배경 */
+  border-radius: 0;
+  padding: 5px;
+  margin-bottom: 4px;
+  border: 1px solid #444;
+  box-shadow: none;
+}
+
+#chat-log .message-header {
+  background-color: rgba(26, 26, 26, 0.8);
+  padding: 2px 9px;
+  border-radius: 0;
+  border-bottom: 1px solid #f7e53b;
+}
+
+#chat-log .message-header * {
+  color: #f7e53b; /* 이름 색상 */
+  font-weight: 600;		
+  font-size: 0.85em;	
+}
+
+#chat-log .message-content {
+  padding: 5px 12px;
+  line-height: 1.4;
+  color: #e0e0e0; /* 내용 색상 */
+}
+
+#chat-log .message.whisper {
+  border: 1px solid #4a90e2;
+  background: rgba(30, 45, 60, 0.9);
+  color: #a8d8ef;
+}
+
+.combatvalue { /* .element-class는 각 버튼 또는 요소의 실제 클래스 이름으로 대체 */
+    margin: 25px; /* 필요에 따라 간격 조정 */
+    padding: 0; /* 필요에 따라 여백 조정 */
+}
+
+/* 브레이크 변경 */
+.breakbutton {
+  display: inline-block !important;
+  padding: 0px 0px !important;
+  font-size: 20px !important;
+  cursor: pointer !important;
+  text-align: center !important; 
+  text-decoration: none !important;
+  outline: none !important;
+  color: #fff !important;
+  background-color: #f44336 !important;
+  border: none !important;
+  border-radius: 7px !important;
+  width: auto !important;
+  height: auto !important;
+  position: relative;
+  overflow: hidden;
+}
+
+
+.breakbutton * {
+  color: inherit !important;
+  background-color: inherit !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+  text-align: inherit !important;
+}
+
+
+.breakbutton:hover {
+  background-color: #d32f2f !important;
+}
+
+.breakbutton:active {
+  background-color: #d32f2f !important;
+  transform: translateY(4px) !important;
+}
+
+
+/* .지형 편집기 */
+
+.terrain-editor-menu {
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  padding: 10px;
+}
+
+.terrain-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 10px;
+}
+
+.terrain-option {
+  background: var(--panel-bg);
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease;
+  color: var(--text-primary);
+}
+
+.terrain-option:hover {
+  background: #4f4f4f;
+  transform: translateY(-2px);
+}
+
+.terrain-option img {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 5px;
+  border-radius: 4px;
+}
+
+.terrain-option.selected {
+  outline: 2px solid var(--highlight-yellow);
+  background: #5f5f5f;
+}
+
+.terrain-info {
+  background: var(--panel-bg);
+  padding: 15px;
+  border-radius: 8px;
+  color: var(--text-primary);
+}
+
+.terrain-info img {
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.effects-list {
+  margin-top: 10px;
+  padding-left: 20px;
+  list-style: none;
+}
+
+.effects-list li {
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.effects-list li:last-child {
+  border-bottom: none;
+}
+
+.terrain-effect {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  margin: 0.125rem;
+}
+
+.terrain-effect i {
+  margin-right: 0.25rem;
+}
+
+.terrain-effect.positive {
+  background: var(--positive-green);
+  color: white;
+}
+
+.terrain-effect.negative {
+  background: var(--negative-red);
+  color: white;
+}
+
+.terrain-effect.neutral {
+  background: var(--neutral-grey);
+  color: white;
+}
+
+/* 상태창 스테이터스 이펙트 */
+.status-effects-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 8px 0;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.status-effect-icon {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.status-effect-icon:hover {
+  transform: scale(1.1);
+}
+
+.status-effect-icon img {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+}
+
+.custom-system-label-root {
+  color: white;
+}
+
+.custom-system-cell-alignLeft > .custom-system-rollable > .custom-system-field, .custom-system-cell-alignLeft > .custom-system-field {
+  color: white;
+}
+
+.flex-group-center {
+  color: white;
+}
+
+.custom-system-field > label {
+  color: white;
+}
+
+.sheet {
+  opacity: 0.97;
+}
+
+.custom-system-rich-content {
+  color: white; 
+}
+
+/* ★★★★★ 글자색 완벽 분리 제어 ★★★★★ */
+
+/* 2. 일반 채팅(시스템 카드가 아닌 것)은 무조건 밝은 회색으로 설정 */
+#chat-log .message .message-content:not(:has(.mcs-card)) {
+  color: #e0e0e0 !important;
+}
+#chat-log .message.whisper .message-content:not(:has(.mcs-card)) {
+    color: #a8d8ef !important;
+}
+
+/* 
+  3. 우리의 시스템 카드(.mcs-card)에 기본 글자색을 어두운 색으로 지정합니다.
+     '모든 자식(*)'을 건드리지 않고 카드 자체에만 지정하여 상속되도록 합니다.
+     이것이 이전 코드의 문제점을 해결하는 핵심입니다.
+*/
+#chat-log .message .mcs-card {
+    color: #4a4a4a !important;
+}
+
+/* 
+  4. 예외 처리: 특별한 색상이 필요한 부분만 '더 구체적인 규칙'으로 다시 덮어씁니다.
+     이 규칙들은 상속받은 색상보다 우선순위가 높습니다.
+*/
+
+/* 
+   4a. 최종 롤 결과값 (어두운 배경)과 그 내부 텍스트는 '흰색'으로 강제합니다.
+       이 규칙은 부모로부터 상속받은 어두운 색상을 덮어씁니다.
+*/
+#chat-log .message .mcs-card div[style*="background: #4a4a4a"],
+#chat-log .message .mcs-card div[style*="background: #4a4a4a"] * {
+    color: white !important;
+}
+
+/* 4b. 크리티컬/펌블, 명중/회피 결과 (컬러 배경)와 그 내부 텍스트는 '흰색'으로 강제합니다. */
+#chat-log .message .mcs-card div[style*="background: #dc3545"] *,
+#chat-log .message .mcs-card div[style*="background: #28a745"] * {
+    color: white !important;
+}
+
+/* 4c. JS에서 직접 지정한 '명중! / 회피!' 텍스트의 원래 색상을 유지합니다. */
+#chat-log .message .mcs-card div[style*="color: rgb(40, 167, 69)"],
+#chat-log .message .mcs-card div[style*="color: #28a745"] {
+    color: #28a745 !important;
+}
+#chat-log .message .mcs-card div[style*="color: rgb(220, 53, 69)"],
+#chat-log .message .mcs-card div[style*="color: #dc3545"] {
+    color: #dc3545 !important;
+}
+

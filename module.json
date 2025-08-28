@@ -1,0 +1,74 @@
+{
+    "id": "metalic-combat-system",
+    "title": "Metallic Guardian RPG System",
+    "description": "Enhanced combat system with attack and defense mechanics",
+    "version": "1.0.0",
+    "compatibility": {
+        "minimum": "12",
+        "verified": "12",
+        "maximum": "12"
+    },
+    "relationships": {
+        "requires": [
+            {
+                "id": "socketlib",
+                "type": "module"
+            },
+            {
+                "id": "custom-system-builder",
+                "type": "system"
+            },
+            {
+                "id": "sequencer",
+                "type": "module"
+            },
+            {
+                "id": "lib-wrapper",
+                "type": "module"
+            }
+        ]
+    },
+    "packs": [
+            {
+                "label": "Actor Template",
+                "type": "Actor",
+                "name": "actor-template",
+                "path": "packs/actor-template",
+                "system": "custom-system-builder",
+                "ownership": {
+                "PLAYER": "OBSERVER",
+                "ASSISTANT": "OWNER"
+                }
+            },
+            {
+                "label": "Item Template",
+                "type": "Item",
+                "name": "Item-template",
+                "path": "packs/item-template",
+                "system": "custom-system-builder",
+                "ownership": {
+                "PLAYER": "OBSERVER",
+                "ASSISTANT": "OWNER"
+                }
+            },
+            {
+                "label": "MGR Guide",
+                "type": "JournalEntry",
+                "name": "MGR-Guide",
+                "path": "packs/MGR-Guide",
+                "system": "custom-system-builder",
+                "ownership": {
+                "PLAYER": "OBSERVER",
+                "ASSISTANT": "OWNER"
+                }
+            }
+      ],
+    "esmodules": [
+        "scripts/module.js",
+        "scripts/terrain/terrainModule.js" 
+    ],
+    "styles": [
+        "styles/style.css"
+    ],
+    "socket": true
+}

@@ -113,8 +113,7 @@ static async performMultiAttack(attackerIds, targetIds, userSelectedAttackType, 
         isCritical,
         isFumble,
         criticalThreshold: adjustedCritThreshold,
-        // ▼▼▼▼▼ [핵심 수정] 오타가 발생했던 부분입니다. ▼▼▼▼▼
-        pumbleThreshold: adjustedPumbleThreshold, // 여기를 수정했습니다.
+        pumbleThreshold: adjustedPumbleThreshold,
         baseDiceTotal,
         selectedSpecialties: selectedSpecialties || [],
         targets: targets.map(t => ({
@@ -128,7 +127,7 @@ static async performMultiAttack(attackerIds, targetIds, userSelectedAttackType, 
             isCritical,
             isFumble,
             criticalThreshold: adjustedCritThreshold,
-            pumbleThreshold: adjustedPumbleThreshold, // 여기도 수정했습니다.
+            pumbleThreshold: adjustedPumbleThreshold,
             baseDiceTotal,
             attacker: attacker,
             attackerToken: attackerToken,
@@ -136,7 +135,6 @@ static async performMultiAttack(attackerIds, targetIds, userSelectedAttackType, 
             attackType: attackType
         }))
     };
-    // ▲▲▲▲▲ [핵심 수정 완료] ▲▲▲▲▲
 
     // 1. 먼저 채팅 메시지를 생성합니다.
     const chatContent = this._getMultiAttackMessageContent([attackerResults], modifier, [attackRoll], attackPart, attackOption, attackType, attacker, attackerItem, critModifier, fixedRoll);
@@ -148,38 +146,47 @@ static async performMultiAttack(attackerIds, targetIds, userSelectedAttackType, 
         rolls: [attackRoll]
     });
 
-    // GM이 순차적으로 자동 방어를 처리하는 로직
-    if (game.user.isGM) {
-        const evasionTargets = attackerResults.targets.filter(t =>
-            t.target.items?.some(item => item.name === '이베이전' && item.system?.props?.type === "specialty")
-        );
+    // ▼▼▼▼▼ [핵심 수정] 여러 개의 자동 방어 요청을 모아서 GM에게 한 번에 보냅니다. ▼▼▼▼▼
+    if (DefenseManager.socket) {
+        const evasionTargetsData = attackerResults.targets
+            .filter(t => t.target.items?.some(item => item.name === '이베이전' && item.system?.props?.type === "specialty"))
+            .map(targetData => {
+                const target = targetData.target;
+                let defaultDefenseType = 'evasion';
+                if (attackPart?.toLowerCase().includes('원격')) {
+                    defaultDefenseType = 'pro';
+                }
+                const defenseBase = target.system.props[defaultDefenseType];
+                const autoDefenseTotal = 7 + parseInt(defenseBase);
 
-        for (const targetData of evasionTargets) {
-            const target = targetData.target;
-            let defaultDefenseType = 'evasion';
-            if (attackPart?.toLowerCase().includes('원격')) {
-                defaultDefenseType = 'pro';
-            }
-            const defenseBase = target.system.props[defaultDefenseType];
-            const autoDefenseTotal = 7 + parseInt(defenseBase);
+                const combatData = JSON.stringify({
+                    attacker: { id: attacker.id, baseAttack: attackerItem.atk || 0, attackType },
+                    weapon: attackerItem,
+                    isCritical,
+                    isFumble
+                });
 
-            const combatData = JSON.stringify({
-                attacker: { id: attacker.id, baseAttack: attackerItem.atk || 0, attackType },
-                weapon: attackerItem,
-                isCritical,
-                isFumble
+                return {
+                    targetTokenId: targetData.targetToken.id,
+                    attackRollTotal: attackRoll.total,
+                    defaultDefenseType,
+                    modifier: 0,
+                    isCritical,
+                    isFumble,
+                    combatData,
+                    autoDefenseTotal,
+                    skipSpecialtyDialog: true,
+                    fixedDice: [3, 4],
+                    messageId: message.id
+                };
             });
 
-            await DefenseManager.performDefense(
-                targetData.targetToken.id,
-                attackRoll.total,
-                defaultDefenseType, 0,
-                isCritical, isFumble,
-                combatData, autoDefenseTotal, true, [3, 4],
-                message.id
-            );
+        if (evasionTargetsData.length > 0) {
+            // 여러 개의 방어 데이터를 배열로 묶어 GM에게 한 번만 요청합니다.
+            DefenseManager.socket.executeAsGM('handleMultipleAutoDefenses', evasionTargetsData);
         }
     }
+    // ▲▲▲▲▲ [핵심 수정 완료] ▲▲▲▲▲
 
     return [attackerResults];
 }
@@ -1250,7 +1257,8 @@ static async performManualDamageRoll(weaponData, attacker, successfulHits = [], 
                 // 공격 시 사용한 특기 정보 추출
                 const specialtyElements = doc.querySelectorAll('.specialty-button');
                 if (specialtyElements.length > 0) {
-                    attackSpecialties = Array.from(specialtyElements).map(el => ({ id: el.dataset.specialtyId, /* ... other data ... */ }));
+                    // [핵심 수정] 특기의 id와 함께 이름(name)도 가져오도록 수정합니다.
+                    attackSpecialties = Array.from(specialtyElements).map(el => ({ id: el.dataset.specialtyId, name: el.dataset.specialtyName }));
                     break; 
                 }
             }
@@ -1688,6 +1696,11 @@ static async _handleDamageSpecialtyCost(totalCost, attacker) {
 static async showDamageDialog(data) {
     const { weaponData, attackerId, hitTargets = [], isCritical = false, defenseSpecialties, defenderId } = data;
 
+    // ▼▼▼▼▼ [디버깅 코드] ▼▼▼▼▼
+    console.log("--- 4. [Attacker] 데미지 다이얼로그 수신 시 ---");
+    console.log("전달받은 방어 특기 데이터:", defenseSpecialties);
+    // ▲▲▲▲▲ [디버깅 코드] ▲▲▲▲▲
+
     if (!weaponData || !attackerId) { return; }
     const attacker = game.actors.get(attackerId);
     if (!attacker) { return; }
@@ -1719,7 +1732,9 @@ static async showDamageDialog(data) {
                 callback: async () => {
                     await this.performManualDamageRoll(weaponData, attacker, hitTargets, isCritical);
                     if (defenseSpecialties?.length && defenderId) {
-                        await DefenseManager.socket.executeForEveryone('deactivateDefenseEffects', defenderId, defenseSpecialties);
+                        // ▼▼▼▼▼ [핵심 수정] 이 부분을 'executeAsGM'으로 변경합니다. ▼▼▼▼▼
+                        await DefenseManager.socket.executeAsGM('deactivateDefenseEffects', defenderId, defenseSpecialties);
+                        // ▲▲▲▲▲ [핵심 수정 완료] ▲▲▲▲▲
                     }
                 }
             },
@@ -1728,7 +1743,9 @@ static async showDamageDialog(data) {
                 label: "취소",
                 callback: async () => {
                     if (defenseSpecialties?.length && defenderId) {
-                        await DefenseManager.socket.executeForEveryone('deactivateDefenseEffects', defenderId, defenseSpecialties);
+                        // ▼▼▼▼▼ [핵심 수정] 이 부분도 'executeAsGM'으로 변경합니다. ▼▼▼▼▼
+                        await DefenseManager.socket.executeAsGM('deactivateDefenseEffects', defenderId, defenseSpecialties);
+                        // ▲▲▲▲▲ [핵심 수정 완료] ▲▲▲▲▲
                     }
                 }
             }

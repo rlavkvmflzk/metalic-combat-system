@@ -900,6 +900,7 @@ body.system-custom-system #chat-log .message .mcs-card div[style*="color: #dc354
 
 .mcs-card-header {
     display: flex;
+    flex-wrap: wrap; 
     align-items: center;
     justify-content: space-between;
     gap: 8px;
@@ -911,12 +912,11 @@ body.system-custom-system #chat-log .message .mcs-card div[style*="color: #dc354
 
 .mcs-card-title {
     margin: 0;
-    font-size: 14px;
-    font-weight: 600;
-    color: #4a4a4a;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #333;
+    white-space: normal;
+    word-break: break-word; /* 또는 break-all */
 }
 
 .mcs-card-content {
@@ -964,24 +964,28 @@ body.system-custom-system #chat-log .message .mcs-card div[style*="color: #dc354
 
 .mcs-dice-tray {
     display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
+    flex-wrap: wrap; /* [핵심 수정 1] 주사위가 많아지면 자동으로 줄바꿈되도록 변경 */
+    gap: 4px;        /* 주사위 사이의 간격 */
+    justify-content: center; /* 주사위를 중앙에 정렬 */
+    flex-grow: 1; /* 남는 공간을 차지하도록 설정 */
+    margin-right: 10px;
 }
 
 .mcs-die {
-    width: 24px;
-    height: 24px;
-    background: white;
-    border: 2px solid #4a4a4a;
-    border-radius: 6px;
+    min-width: 28px;
+    height: 28px;
+    font-size: 16px;
+    font-weight: bold;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
-    font-size: 12px;
-    color: black;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: 1px solid #b5b5b5;
+    border-radius: 4px;
+    background-color: #f0f0f0;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    color:black;
 }
+
 
 .mcs-roll-total {
     font-size: 16px;
@@ -1210,12 +1214,14 @@ body.system-custom-system #chat-log .message .mcs-card div[style*="color: #dc354
 /* ★★★★★ 카드 시스템 V2 스타일 (Damage Roll) ★★★★★ */
 
 .mcs-dice-tray {
-    overflow-x: auto;
-    flex-wrap: nowrap; /* 데미지 주사위가 많을 경우를 대비 */
-    padding-right: 8px; /* 스크롤 공간 확보 */
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none;  /* IE and Edge */
+    display: flex;
+    flex-wrap: wrap; /* 주사위가 많아지면 자동으로 줄바꿈 (유지) */
+    gap: 4px;
+    justify-content: center;
+    flex-grow: 1;
+    margin-right: 10px;
 }
+
 .mcs-dice-tray::-webkit-scrollbar {
     display: none; /* Chrome, Safari, Opera */
 }
@@ -1531,19 +1537,19 @@ body.system-custom-system #chat-log .message .mcs-card div[style*="color: #dc354
 .mcs-card-title-group {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
     gap: 8px;
+    overflow: hidden; /* 자식 요소가 부모 요소를 넘어가지 않도록 설정 */
 }
 
 .mcs-roll-info {
-    font-size: 12px;
-    color: #666;
-    margin-bottom: 4px;
-    overflow-x: auto;
-    white-space: nowrap;
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none;  /* IE and Edge */
+    font-size: 0.9em;
+    margin-bottom: 8px;
+    color: #555;
+    /* [핵심 수정 2] 대상 이름이 길어지면 줄바꿈 되도록 설정 */
+    white-space: normal;
+    word-break: break-word;
 }
+
 .mcs-roll-info::-webkit-scrollbar {
     display: none; /* Chrome, Safari, Opera */
 }

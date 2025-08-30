@@ -1356,7 +1356,7 @@ Hooks.once('init', () => {
     });
 });
 // =======================================================================
-// ★★★★★ 채팅 카드 상호작용 기능 활성화 (오류 수정 최종 버전) ★★★★★
+// ★★★★★ 채팅 카드 상호작용 기능 활성화 (수정된 최종 버전) ★★★★★
 // =======================================================================
 
 /**
@@ -1374,52 +1374,94 @@ const activateChatListeners = (message, html, data) => {
         card.toggleClass('collapsed');
     });
 
-    // 방어 굴림 버튼 기능
-    html.find('.mcs-defense-button').on('click', async event => {
-        event.preventDefault();
-        console.log('--- [MCS DEBUG] Defense Button Clicked ---'); // 디버깅 로그 추가
-
-        const button = $(event.currentTarget);
-        const controlGroup = button.closest('.mcs-defense-controls'); // 버튼이 속한 그룹 찾기
+    // 방어 컨트롤 (버튼, 셀렉트 박스 등) 전체에 대한 소유권 검사
+    html.find('.mcs-defense-controls').each((i, controlDiv) => {
+        const button = $(controlDiv).find('.mcs-defense-button');
+        if (button.length === 0) return;
 
         const targetId = button.data('targetId');
-        const attackRoll = button.data('attackRoll');
-        const isCritical = button.data('isCritical');
-        const isFumble = button.data('isFumble');
-        const combatData = button.data('combatData');
+        const actorId = button.data('actorId'); // actorId도 확인
 
-        const defenseType = controlGroup.find('.mcs-defense-select').val();
-        const modifier = parseInt(controlGroup.find('.mcs-defense-modifier').val()) || 0;
+        const targetToken = canvas.tokens.get(targetId);
+        const targetActor = targetToken ? targetToken.actor : game.actors.get(actorId);
 
-        // 디버깅: 전달할 데이터 확인
-        console.log('[MCS DEBUG] Event Listener Data:', {
-            targetId,
-            attackRoll,
-            defenseType,
-            modifier,
-            isCritical,
-            isFumble,
-            combatData: decodeURIComponent(combatData)
-        });
-
-        if (!targetId || isNaN(attackRoll)) {
-            console.error('[MCS DEBUG] Critical data missing!', { targetId, attackRoll });
+        if (!targetActor) {
+            console.warn(`[MCS] Defense target actor not found for ID: ${targetId} or ${actorId}`);
+            $(controlDiv).hide();
             return;
         }
 
-        await DefenseManager.performDefense(
-            targetId,
-            attackRoll,
-            defenseType,
-            modifier,
-            isCritical,
-            isFumble,
-            combatData
-        );
-        console.log('--- [MCS DEBUG] DefenseManager.performDefense() Called ---');
+        // 현재 사용자가 액터의 소유자이거나 GM인지 확인
+        const isOwner = targetActor.isOwner;
+        const isGM = game.user.isGM;
+
+        if (!isOwner && !isGM) {
+            // 소유자가 아니면 방어 컨트롤 UI 전체를 숨김
+            $(controlDiv).hide();
+        } else {
+            // 소유자일 경우에만 클릭 이벤트 리스너를 등록
+            button.on('click', async event => {
+                event.preventDefault();
+                console.log('--- [MCS DEBUG] Defense Button Clicked ---');
+
+                const attackRoll = button.data('attackRoll');
+                const isCritical = button.data('isCritical');
+                const isFumble = button.data('isFumble');
+                const combatData = button.data('combatData');
+
+                const defenseType = $(controlDiv).find('.mcs-defense-select').val();
+                const modifier = parseInt($(controlDiv).find('.mcs-defense-modifier').val()) || 0;
+
+                console.log('[MCS DEBUG] Event Listener Data:', {
+                    targetId,
+                    attackRoll,
+                    defenseType,
+                    modifier,
+                    isCritical,
+                    isFumble,
+                    combatData: combatData ? decodeURIComponent(combatData) : 'N/A'
+                });
+
+                if (!targetId || isNaN(attackRoll)) {
+                    console.error('[MCS DEBUG] Critical data missing!', { targetId, attackRoll });
+                    return;
+                }
+
+                await DefenseManager.performDefense(
+                    targetId,
+                    attackRoll,
+                    defenseType,
+                    modifier,
+                    isCritical,
+                    isFumble,
+                    combatData
+                );
+                console.log('--- [MCS DEBUG] DefenseManager.performDefense() Called ---');
+            });
+        }
     });
 };
+
 
 // Foundry VTT의 핵심 Hook: 채팅 메시지가 화면에 그려질 때마다 위의 함수를 실행
 Hooks.on('renderChatMessage', activateChatListeners);
 
+        Hooks.on('preCreateChatMessage', (message, data, options, userId) => {
+            // 1. 생성되려는 메시지의 내용을 가져옵니다.
+            const content = message.content;
+
+            // 2. 내용이 'custom-system-roll' 클래스와 '<span>ERROR</span>'를
+            //    모두 포함하는지 정확하게 확인합니다.
+            const isErrorRollMessage = content.includes('class="custom-system-roll"') &&
+                                     content.includes('<span>ERROR</span>');
+
+            // 3. 만약 문제가 되는 바로 그 메시지라면,
+            if (isErrorRollMessage) {
+                // 디버깅을 위해 콘솔에만 조용히 로그를 남깁니다. (사용자에게는 보이지 않습니다)
+                console.log('MCS | Intercepted and blocked an "ERROR" roll message from being created.');
+                
+                // 4. false를 반환하여 이 메시지의 생성을 완전히 취소합니다.
+                //    메시지는 데이터베이스에 저장되지도 않고, 어떤 클라이언트에게도 전송되지 않습니다.
+                return false;
+            }
+        });

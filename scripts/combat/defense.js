@@ -109,10 +109,8 @@ export class DefenseManager {
 static async _processDefenseResult(messageId, targetId, resultContent, combatDataStr, selectedSpecialties, defenderId) {
     if (!game.user.isGM) return;
 
-    // ▼▼▼▼▼ [디버깅 코드] ▼▼▼▼▼
     console.log("--- 2. [GM] 방어 결과 수신 시 ---");
     console.log("클라이언트로부터 받은 방어 특기 데이터:", selectedSpecialties);
-    // ▲▲▲▲▲ [디버깅 코드] ▲▲▲▲▲
 
     const message = game.messages.get(messageId);
     if (!message) {
@@ -127,6 +125,30 @@ static async _processDefenseResult(messageId, targetId, resultContent, combatDat
     await message.setFlag("world", "mcsDefenseUpdateLock", true);
 
     try {
+        // ★★★★★ 핵심 수정 시작 ★★★★★
+        // 1. 기존에 저장된 방어 데이터가 있는지 확인하고 가져옵니다.
+        const allDefenseData = message.getFlag("world", "mcsDefenseData") || [];
+
+        // 2. 액터 ID(defenderId)가 아닌 토큰 ID(targetId)를 기준으로 중복을 확인하고 저장합니다.
+        const existingIndex = allDefenseData.findIndex(d => d.tokenId === targetId);
+        const newDefenseEntry = {
+            defenderId: defenderId, // 액터 ID는 참고용으로 계속 저장
+            tokenId: targetId,      // 토큰 ID를 고유 식별자로 사용
+            specialties: selectedSpecialties
+        };
+
+        if (existingIndex > -1) {
+            // 동일 토큰의 데이터는 덮어씁니다 (예: 재굴림).
+            allDefenseData[existingIndex] = newDefenseEntry;
+        } else {
+            // 새로운 토큰의 데이터는 추가합니다.
+            allDefenseData.push(newDefenseEntry);
+        }
+        
+        // 3. 갱신된 전체 방어 데이터를 다시 메시지 플래그에 저장합니다.
+        await message.setFlag("world", "mcsDefenseData", allDefenseData);
+        // ★★★★★ 핵심 수정 종료 ★★★★★
+
         const currentContent = message.content;
         const parser = new DOMParser();
         const doc = parser.parseFromString(currentContent, 'text/html');
@@ -142,7 +164,7 @@ static async _processDefenseResult(messageId, targetId, resultContent, combatDat
 
                 const updatedDoc = new DOMParser().parseFromString(newHtml, 'text/html');
                 if (updatedDoc.querySelectorAll('.mcs-defense-controls').length === 0) {
-                    this._triggerDamageDialog(message, updatedDoc, combatDataStr, selectedSpecialties, defenderId);
+                    this._triggerDamageDialog(message, updatedDoc, combatDataStr);
                 }
             }
         }
@@ -156,8 +178,14 @@ static async _processDefenseResult(messageId, targetId, resultContent, combatDat
     /**
      * [신규] 데미지 다이얼로그를 여는 로직을 별도 함수로 분리합니다.
      */
-static async _triggerDamageDialog(message, updatedDoc, combatDataStr, selectedSpecialties, defenderId) {
+static async _triggerDamageDialog(message, updatedDoc, combatDataStr) {
     try {
+        // ★★★★★ 핵심 수정 시작 ★★★★★
+        // 1. 더 이상 개별 defenderId, selectedSpecialties를 인자로 받지 않습니다.
+        // 2. 메시지 플래그에서 누적된 전체 방어 데이터를 가져옵니다.
+        const allDefenseData = message.getFlag("world", "mcsDefenseData") || [];
+        // ★★★★★ 핵심 수정 종료 ★★★★★
+        
         const combatData = JSON.parse(decodeURIComponent(combatDataStr));
         if (combatData?.attacker) {
             const hitTargets = [];
@@ -184,14 +212,12 @@ static async _triggerDamageDialog(message, updatedDoc, combatDataStr, selectedSp
                 attackerId: combatData.attacker.id,
                 hitTargets,
                 isCritical,
-                defenseSpecialties: selectedSpecialties,
-                defenderId: defenderId
+                // ★★★★★ 핵심 수정: 'allDefenseData'라는 이름으로 전체 데이터를 전달합니다. ★★★★★
+                allDefenseData: allDefenseData
             };
             
-            // ▼▼▼▼▼ [디버깅 코드] ▼▼▼▼▼
             console.log("--- 3. [GM] 데미지 다이얼로그 전송 직전 ---");
-            console.log("공격자에게 보낼 방어 특기 데이터:", dialogData.defenseSpecialties);
-            // ▲▲▲▲▲ [디버깅 코드] ▲▲▲▲▲
+            console.log("공격자에게 보낼 전체 방어 특기 데이터:", dialogData.allDefenseData);
 
             if (this.socket) {
                 await this.socket.executeForUsers("showDamageDialog", [attackingUserId], dialogData);
@@ -1040,32 +1066,41 @@ static async _calculateDamageContent(weaponData) {
             ui.notifications.error("방어 재굴림 중 오류가 발생했습니다.");
         }
     }
-static async _handleDeactivateDefenseEffects(defenderId, specialties) {
+static async _handleDeactivateDefenseEffects(defenseInfo) {
     console.log("--- 6. [GM] 최종 비활성화 함수 수신 시 ---");
-    console.log("비활성화할 방어 특기 데이터:", specialties);
+    console.log("비활성화할 방어 데이터:", defenseInfo);
 
     if (!game.user.isGM) return;
 
-    // 원본 액터를 먼저 찾습니다.
-    const baseActor = game.actors.get(defenderId);
-    if (!baseActor) {
-        console.error('Defender (base actor) not found for deactivation:', defenderId);
+    // defenseInfo 객체에서 tokenId를 직접 사용합니다.
+    const tokenId = defenseInfo.tokenId;
+    if (!tokenId) {
+        console.error('Deactivation failed: Token ID is missing.', defenseInfo);
         return;
     }
 
-    // ▼▼▼▼▼ [핵심 수정] 업데이트할 실제 대상을 찾습니다. ▼▼▼▼▼
-    // 현재 활성화된 씬에서 해당 액터 ID를 가진 토큰을 찾습니다.
-    const defenderToken = canvas.scene?.tokens.find(t => t.actor?.id === defenderId);
-    // 토큰이 존재하면 토큰의 액터를, 없으면 원본(base) 액터를 최종 대상으로 삼습니다.
-    const defender = defenderToken ? defenderToken.actor : baseActor;
-    console.log(`[DEBUG] 최종 비활성화 대상: ${defender.name} (${defenderToken ? 'Token Actor' : 'Base Actor'})`);
-    // ▲▲▲▲▲ [핵심 수정 완료] ▲▲▲▲▲
+    // 현재 씬에서 ID를 이용해 정확한 토큰을 찾습니다.
+    const defenderToken = canvas.scene?.tokens.get(tokenId);
+    if (!defenderToken) {
+        console.error('Defender token not found for deactivation:', tokenId);
+        return;
+    }
+
+    // 해당 토큰의 액터를 대상으로 지정합니다.
+    const defender = defenderToken.actor;
+    if (!defender) {
+        console.error('Actor for token not found:', tokenId);
+        return;
+    }
+
+    console.log(`[DEBUG] 최종 비활성화 대상: ${defender.name} (Token ID: ${defenderToken.id})`);
 
     try {
-        // 이제부터는 defender 변수가 실제 효과가 적용된 액터를 가리킵니다.
         let activeGroups = defender.system.activeConditionalModifierGroups || [];
         console.log(`[DEBUG] 비활성화 전, ${defender.name}의 활성 그룹:`, JSON.parse(JSON.stringify(activeGroups)));
 
+        // defenseInfo 객체에서 specialties 배열을 가져옵니다.
+        const specialties = defenseInfo.specialties || [];
         for (const specialty of specialties) {
             const modifierGroups = specialty.modifierGroups || [];
             console.log(`[DEBUG] '${specialty.name}'에서 가져온 비활성화할 그룹:`, modifierGroups);
@@ -1077,12 +1112,12 @@ static async _handleDeactivateDefenseEffects(defenderId, specialties) {
         
         console.log(`[DEBUG] 비활성화 후, ${defender.name}의 활성 그룹:`, JSON.parse(JSON.stringify(activeGroups)));
 
-        // 최종 대상(defender)의 데이터를 업데이트합니다.
+        // 최종 대상(토큰 액터)의 데이터를 업데이트합니다.
         await defender.update({
             "system.activeConditionalModifierGroups": activeGroups
         });
 
-        ui.notifications.info("방어 특기 효과가 종료되었습니다.");
+        ui.notifications.info(`${defender.name}의 방어 특기 효과가 종료되었습니다.`);
 
     } catch (error) {
         console.error("방어 효과 비활성화 중 오류 발생:", error);

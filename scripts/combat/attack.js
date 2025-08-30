@@ -136,6 +136,34 @@ static async performMultiAttack(attackerIds, targetIds, userSelectedAttackType, 
         }))
     };
 
+    // ▼▼▼▼▼ [요청사항] 무기 효과(weaponFx) 재생 로직을 여기에 복원합니다. ▼▼▼▼▼
+    window.pendingWeaponEffect = async () => {
+        const effectTargets = targetIds.map(targetId => {
+            return canvas.tokens.placeables.find(t => t.id === targetId);
+        }).filter(t => t); // 유효한 토큰만 필터링
+
+        if (attackerToken && effectTargets.length > 0) {
+            try {
+                // attackerItem에서 weaponfx 값을 가져오거나 '기본'을 기본값으로 사용합니다.
+                const weaponFx = attackerItem.weaponfx || '기본';
+                const success = !isFumble; // 펌블이 아니면 성공으로 간주합니다.
+
+                // Sequencer 모듈이 활성화되어 있는지 확인합니다.
+                if (game.modules.get('sequencer')?.active) {
+                    await WeaponEffects.playWeaponEffect(
+                        attackerToken,
+                        effectTargets,
+                        weaponFx,
+                        success
+                    );
+                }
+            } catch (error) {
+                console.error("무기 효과 재생 중 오류 발생:", error);
+            }
+        }
+    };
+    // ▲▲▲▲▲ 무기 효과(weaponFx) 로직 복원 완료 ▲▲▲▲▲
+
     // 1. 먼저 채팅 메시지를 생성합니다.
     const chatContent = this._getMultiAttackMessageContent([attackerResults], modifier, [attackRoll], attackPart, attackOption, attackType, attacker, attackerItem, critModifier, fixedRoll);
     const message = await ChatMessage.create({
@@ -146,7 +174,7 @@ static async performMultiAttack(attackerIds, targetIds, userSelectedAttackType, 
         rolls: [attackRoll]
     });
 
-    // ▼▼▼▼▼ [핵심 수정] 여러 개의 자동 방어 요청을 모아서 GM에게 한 번에 보냅니다. ▼▼▼▼▼
+    // ▼▼▼▼▼ [기존 기능 유지] 여러 개의 자동 방어 요청을 모아서 GM에게 한 번에 보냅니다. ▼▼▼▼▼
     if (DefenseManager.socket) {
         const evasionTargetsData = attackerResults.targets
             .filter(t => t.target.items?.some(item => item.name === '이베이전' && item.system?.props?.type === "specialty"))
@@ -157,7 +185,7 @@ static async performMultiAttack(attackerIds, targetIds, userSelectedAttackType, 
                     defaultDefenseType = 'pro';
                 }
                 const defenseBase = target.system.props[defaultDefenseType];
-                const autoDefenseTotal = 7 + parseInt(defenseBase);
+                const autoDefenseTotal = parseInt(defenseBase);
 
                 const combatData = JSON.stringify({
                     attacker: { id: attacker.id, baseAttack: attackerItem.atk || 0, attackType },
@@ -186,7 +214,7 @@ static async performMultiAttack(attackerIds, targetIds, userSelectedAttackType, 
             DefenseManager.socket.executeAsGM('handleMultipleAutoDefenses', evasionTargetsData);
         }
     }
-    // ▲▲▲▲▲ [핵심 수정 완료] ▲▲▲▲▲
+    // ▲▲▲▲▲ 자동 방어 로직 유지 완료 ▲▲▲▲▲
 
     return [attackerResults];
 }
@@ -1694,12 +1722,10 @@ static async _handleDamageSpecialtyCost(totalCost, attacker) {
  * @param {object} data - 필요한 데이터 객체
  */
 static async showDamageDialog(data) {
-    const { weaponData, attackerId, hitTargets = [], isCritical = false, defenseSpecialties, defenderId } = data;
+    const { weaponData, attackerId, hitTargets = [], isCritical = false, allDefenseData } = data;
 
-    // ▼▼▼▼▼ [디버깅 코드] ▼▼▼▼▼
     console.log("--- 4. [Attacker] 데미지 다이얼로그 수신 시 ---");
-    console.log("전달받은 방어 특기 데이터:", defenseSpecialties);
-    // ▲▲▲▲▲ [디버깅 코드] ▲▲▲▲▲
+    console.log("전달받은 전체 방어 특기 데이터:", allDefenseData);
 
     if (!weaponData || !attackerId) { return; }
     const attacker = game.actors.get(attackerId);
@@ -1731,10 +1757,14 @@ static async showDamageDialog(data) {
                 label: "데미지 굴림",
                 callback: async () => {
                     await this.performManualDamageRoll(weaponData, attacker, hitTargets, isCritical);
-                    if (defenseSpecialties?.length && defenderId) {
-                        // ▼▼▼▼▼ [핵심 수정] 이 부분을 'executeAsGM'으로 변경합니다. ▼▼▼▼▼
-                        await DefenseManager.socket.executeAsGM('deactivateDefenseEffects', defenderId, defenseSpecialties);
-                        // ▲▲▲▲▲ [핵심 수정 완료] ▲▲▲▲▲
+                    
+                    // ★★★★★ 핵심 수정: allDefenseData 배열 전체를 순회하며 defenseInfo 객체 전체를 전달합니다. ★★★★★
+                    if (allDefenseData?.length > 0) {
+                        console.log("--- 5. [Attacker] 특기 비활성화 요청 ---");
+                        for (const defenseInfo of allDefenseData) {
+                            // defenderId 대신 defenseInfo 객체 전체를 넘겨줍니다.
+                            await DefenseManager.socket.executeAsGM('deactivateDefenseEffects', defenseInfo);
+                        }
                     }
                 }
             },
@@ -1742,10 +1772,11 @@ static async showDamageDialog(data) {
                 icon: '<i class="fas fa-times"></i>',
                 label: "취소",
                 callback: async () => {
-                    if (defenseSpecialties?.length && defenderId) {
-                        // ▼▼▼▼▼ [핵심 수정] 이 부분도 'executeAsGM'으로 변경합니다. ▼▼▼▼▼
-                        await DefenseManager.socket.executeAsGM('deactivateDefenseEffects', defenderId, defenseSpecialties);
-                        // ▲▲▲▲▲ [핵심 수정 완료] ▲▲▲▲▲
+                    // ★★★★★ 핵심 수정: 취소 시에도 동일하게 defenseInfo 객체 전체를 전달합니다. ★★★★★
+                    if (allDefenseData?.length > 0) {
+                        for (const defenseInfo of allDefenseData) {
+                             await DefenseManager.socket.executeAsGM('deactivateDefenseEffects', defenseInfo);
+                        }
                     }
                 }
             }

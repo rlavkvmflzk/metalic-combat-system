@@ -54,99 +54,100 @@ export class DamageManager {
         신: "신",
         노래: "노래"
     };
+static async getLatestDamageInfo() {
+    const messages = game.messages.contents.slice(-20).reverse(); // 최근 20개 메시지를 역순으로 탐색
 
-    static async getLatestDamageInfo() {
-        const messages = game.messages.contents.slice(-20);
-        
-        let damageInfo = null;
-        let weaponTypeInfo = null;
-        let isArmorIgnore = false;
-        let isSniping = false;
-        let isCritical = false;
-        
-        for (let i = messages.length - 1; i >= 0; i--) {
-            const message = messages[i];
-            const content = message.content;
-            
-            // 크리티컬 체크
-            if (content.includes('크리티컬!')) {
-                isCritical = true;
-            }
-            
-            // 대미지 메시지 찾기
-            if (!damageInfo && content.includes('- 최종 데미지')) {
-                console.log('Found damage message');
-                const damageMatch = content.match(/<span[^>]*style=["'][^"']*background:\s*#dc3545[^"']*["'][^>]*>\s*(\d+)\s*<\/span>/);
-                if (damageMatch) {
-                    damageInfo = parseInt(damageMatch[1]);
-                    console.log('Found damage:', damageInfo);
-                }
-            }
-            
-            // 무기 타입과 대미지 타입 정보 찾기
-            if (!weaponTypeInfo && content.includes('multi-attack-roll')) {
-                console.log('Found attack roll message');
-                
-                // 방어관통 체크
-                isArmorIgnore = content.includes('방어관통');
-                
-                // 저격 체크
-                isSniping = content.includes('저격');
-                
-                const spans = content.match(/background:#f8f9fa[^>]*?color:#666[^>]*?>\s*([^<]+?)\s*</g);
-                if (spans) {
-                    let weaponType = 'melee';
-                    let damageType = 'slash';
-                    
-                    for (const span of spans) {
-                        const text = span.match(/>\s*([^<]+?)\s*</)[1];
-                        
-                        if (text.includes('원격') || text.includes('포격')) {
-                            weaponType = 'artillery';
-                        } else if (text.includes('사격')) {
-                            weaponType = 'ranged';
-                        }
-                        
-                        if (text.includes('관통')) damageType = 'pierce';
-                        else if (text.includes('타격')) damageType = 'bludge';
-                        else if (text.includes('화염')) damageType = 'fire';
-                        else if (text.includes('얼음')) damageType = 'ice';
-                        else if (text.includes('번개')) damageType = 'lightning';
-                        else if (text.includes('빛')) damageType = 'light';
-                        else if (text.includes('어둠')) damageType = 'dark';
-                        else if (text.includes('신')) damageType = '신';
-                        else if (text.includes('노래')) damageType = '노래';
-                    }
-                    
-                    weaponTypeInfo = { weaponType, damageType };
-                }
-            }
-            
-            if (damageInfo && weaponTypeInfo) {
-                return {
-                    damage: damageInfo,
-                    weaponType: weaponTypeInfo.weaponType,
-                    damageType: weaponTypeInfo.damageType,
-                    isArmorIgnore,
-                    isSniping,
-                    isCritical
-                };
+    let damageInfo = null;
+    let weaponInfo = null;
+    let isCritical = false;
+
+    for (const message of messages) {
+        const content = message.content;
+        // DOMParser를 사용하여 HTML 구조를 분석합니다.
+        const doc = new DOMParser().parseFromString(content, 'text/html');
+
+        // 1. 데미지 값 찾기 (항상 가장 먼저)
+        if (damageInfo === null) {
+            // 데미지 롤 카드에서 .mcs-roll-total.damage 클래스를 가진 요소를 찾습니다.
+            const damageEl = doc.querySelector('.damage-roll .mcs-roll-total.damage');
+            if (damageEl) {
+                damageInfo = parseInt(damageEl.textContent.trim());
+                console.log('Damage Manager: Found damage value ->', damageInfo);
             }
         }
-        
-        if (damageInfo) {
+
+        // 2. 무기 정보가 담긴 공격 카드 찾기
+        if (weaponInfo === null) {
+            const attackCard = doc.querySelector('.multi-attack');
+            if (attackCard) {
+                console.log('Damage Manager: Found attack card.');
+                let weaponType = 'melee'; // 기본값
+                let damageType = 'slash'; // 기본값
+
+                // 무기 속성 태그들을 모두 가져옵니다.
+                const infoTags = attackCard.querySelectorAll('.mcs-card-subheader .mcs-tag-lightgrey');
+                infoTags.forEach(tag => {
+                    const text = tag.textContent.trim();
+                    if (text.includes('원격')) weaponType = 'artillery';
+                    else if (text.includes('사격')) weaponType = 'ranged';
+                    
+                    if (text.includes('관통')) damageType = 'pierce';
+                    else if (text.includes('타격')) damageType = 'bludge';
+                    else if (text.includes('화염')) damageType = 'fire';
+                    else if (text.includes('얼음')) damageType = 'ice';
+                    else if (text.includes('번개')) damageType = 'lightning';
+                    else if (text.includes('빛')) damageType = 'light';
+                    else if (text.includes('어둠')) damageType = 'dark';
+                    else if (text.includes('신')) damageType = '신';
+                    else if (text.includes('노래')) damageType = '노래';
+                });
+
+                // 특수 효과 태그들 (방어관통, 저격)을 확인합니다.
+                let isArmorIgnore = false;
+                let isSniping = false;
+                const specialTags = attackCard.querySelectorAll('.mcs-tag-group-special .mcs-tag-special');
+                specialTags.forEach(tag => {
+                    const text = tag.textContent.trim();
+                    if (text.includes('방어관통')) isArmorIgnore = true;
+                    if (text.includes('저격')) isSniping = true;
+                });
+
+                weaponInfo = { weaponType, damageType, isArmorIgnore, isSniping };
+                console.log('Damage Manager: Extracted weapon info ->', weaponInfo);
+
+                // 공격 카드에서 크리티컬 여부도 확인
+                if (attackCard.querySelector('.mcs-crit-fumble-banner.critical')) {
+                    isCritical = true;
+                    console.log('Damage Manager: Critical hit detected in attack card.');
+                }
+            }
+        }
+
+        // 모든 정보를 찾았으면 반복을 중단합니다.
+        if (damageInfo !== null && weaponInfo !== null) {
             return {
                 damage: damageInfo,
-                weaponType: 'melee',
-                damageType: 'slash',
-                isArmorIgnore: false,
-                isSniping: false,
-                isCritical: false
+                ...weaponInfo,
+                isCritical
             };
         }
-        
-        return null;
     }
+
+    // 데미지만 찾고 무기 정보를 못 찾은 경우 (예: 수동 데미지 입력)
+    if (damageInfo !== null) {
+        return {
+            damage: damageInfo,
+            weaponType: 'melee',
+            damageType: 'slash',
+            isArmorIgnore: false,
+            isSniping: false,
+            isCritical: false // 크리티컬 정보는 공격 카드에만 있으므로 기본값 false
+        };
+    }
+    
+    console.log('Damage Manager: Could not find recent damage info.');
+    return null; // 정보를 찾지 못했으면 null 반환
+}
 
     static getDefenseAndBarrier(actor) {
         let props = actor.system.props;
